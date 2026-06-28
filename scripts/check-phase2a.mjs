@@ -25,8 +25,11 @@ for (const file of requiredFiles) {
 const gitignore = read(".gitignore");
 if (/\.env\*/.test(gitignore)) pass(".gitignore chặn file env");
 else fail(".gitignore chưa chặn file env");
-if (existsSync(join(root, ".env.local"))) warn("Có .env.local; hãy dùng git check-ignore trước khi commit");
-else warn("Chưa có .env.local; landing sẽ dùng fallback static");
+if (existsSync(join(root, ".env.local"))) {
+  const localEnv = read(".env.local");
+  if (/YOUR_PROJECT|YOUR_PUBLISHABLE_KEY/i.test(localEnv)) warn(".env.local vẫn chứa placeholder; Supabase chưa được kích hoạt");
+  else warn("Có .env.local; hãy dùng git check-ignore trước khi commit");
+} else warn("Chưa có .env.local; landing sẽ dùng fallback static");
 
 const envExample = read(".env.example");
 for (const name of ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SITE_URL"]) {

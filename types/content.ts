@@ -50,6 +50,8 @@ export interface Promotion {
   price: number;
   highlights: string[];
   note: string;
+  featured: boolean;
+  image: ContentImage | null;
 }
 
 export interface Tournament {

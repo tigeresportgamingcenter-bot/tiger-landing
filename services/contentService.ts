@@ -52,7 +52,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       heroContent: { ...fallback.heroContent, image: remote.heroImage ?? fallback.heroContent.image },
       communityImage: remote.communityImage ?? fallback.communityImage,
       hallOfFame: remote.hallOfFame ?? fallback.hallOfFame,
-      featuredPromotion: remotePromotions[0] ?? fallback.featuredPromotion,
+      featuredPromotion: remote.featuredPromotion ?? remotePromotions.find((promotion) => promotion.featured) ?? fallback.featuredPromotion,
       galleryItems: remote.galleryItems ?? fallback.galleryItems,
     };
   } catch {

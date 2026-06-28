@@ -10,6 +10,7 @@ export interface SupabaseContent {
   heroImage?: ContentImage;
   communityImage?: ContentImage;
   galleryItems?: GalleryItem[];
+  featuredPromotion?: Promotion;
 }
 
 const games: SupportedGame[] = ["FC Online", "Valorant", "TFT", "AOE"];
@@ -40,18 +41,17 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   if (!isSupabaseConfigured()) return null;
   const { url, key } = getSupabaseConfig();
   const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const [branchResult, promotionResult, tournamentResult, memberResult, imageResult, galleryResult] = await Promise.all([
     supabase.from("branches").select("*").eq("published", true).eq("verified", true).order("sort_order"),
-    supabase.from("promotions").select("*").eq("published", true).eq("verified", true).order("featured", { ascending: false }).order("created_at", { ascending: false }),
+    supabase.from("promotions").select("slug,name,price,highlights,note,image_url,featured,valid_from,valid_until").eq("published", true).eq("verified", true).or(`valid_from.is.null,valid_from.lte.${today}`).or(`valid_until.is.null,valid_until.gte.${today}`).order("featured", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("tournaments").select("*").eq("published", true).eq("verified", true).order("held_on", { ascending: false }),
     supabase.from("hall_of_fame_members").select("*").eq("published", true).eq("verified", true).eq("consent_confirmed", true).order("created_at", { ascending: false }),
     supabase.from("site_images").select("*").eq("published", true).eq("verified", true),
     supabase.from("gallery_items").select("*").eq("published", true).eq("verified", true).order("sort_order"),
   ]);
-  const firstError = [branchResult.error, promotionResult.error, tournamentResult.error, memberResult.error, imageResult.error, galleryResult.error].find(Boolean);
-  if (firstError) throw firstError;
 
-  const branches: Branch[] = (branchResult.data ?? []).map((row) => ({
+  const branches: Branch[] = (branchResult.error ? [] : branchResult.data ?? []).map((row) => ({
     id: row.slug,
     name: row.name,
     area: row.area,
@@ -63,15 +63,14 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     description: row.description,
     image: safeImage(row.image_url, row.image_alt || `Không gian tại ${row.name}`),
   }));
-  const today = new Date().toISOString().slice(0, 10);
-  const promotions: Promotion[] = (promotionResult.data ?? []).filter((row) => (!row.valid_from || row.valid_from <= today) && (!row.valid_until || row.valid_until >= today)).map((row) => ({ id: row.slug, name: row.name, price: row.price, highlights: Array.isArray(row.highlights) ? row.highlights.filter((item: unknown): item is string => typeof item === "string") : [], note: row.note }));
-  const tournamentRows = (tournamentResult.data ?? []).filter((row) => games.includes(row.game as SupportedGame));
+  const promotions: Promotion[] = (promotionResult.error ? [] : promotionResult.data ?? []).map((row) => ({ id: row.slug, name: row.name, price: row.price, highlights: Array.isArray(row.highlights) ? row.highlights.filter((item: unknown): item is string => typeof item === "string") : [], note: row.note, featured: Boolean(row.featured), image: safeImage(row.image_url, `Ảnh khuyến mãi ${row.name}`) }));
+  const tournamentRows = (tournamentResult.error ? [] : tournamentResult.data ?? []).filter((row) => games.includes(row.game as SupportedGame));
   const tournaments: Tournament[] = tournamentRows.map((row) => ({ id: row.slug, game: row.game, description: row.description }));
   const hallTournaments: HallOfFameTournament[] = tournamentRows.map((row) => ({ id: row.slug, status: "verified", name: row.name, game: row.game as SupportedGame, heldOn: row.held_on, branchName: row.branch_name, placements: safePlacements(row.placements), image: safeImage(row.image_url, row.image_alt || `Giải đấu ${row.name}`) }));
-  const members: HonoredMember[] = (memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({ id: row.id, status: "verified", displayName: row.display_name, tier: row.tier as MemberTier, periodLabel: row.period_label, consentConfirmed: true, image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`) }));
+  const members: HonoredMember[] = (memberResult.error ? [] : memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({ id: row.id, status: "verified", displayName: row.display_name, tier: row.tier as MemberTier, periodLabel: row.period_label, consentConfirmed: true, image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`) }));
   const images = new Map<string, ContentImage>();
-  for (const row of imageResult.data ?? []) { const image = safeImage(row.public_url, row.alt_text); if (image) images.set(row.image_key, image); }
-  const galleryItems: GalleryItem[] = (galleryResult.data ?? []).flatMap((row) => { const image = safeImage(row.image_url, row.image_alt); return image ? [{ id: row.id, title: row.title, image }] : []; });
+  for (const row of imageResult.error ? [] : imageResult.data ?? []) { const image = safeImage(row.public_url, row.alt_text); if (image) images.set(row.image_key, image); }
+  const galleryItems: GalleryItem[] = (galleryResult.error ? [] : galleryResult.data ?? []).flatMap((row) => { const image = safeImage(row.image_url, row.image_alt); return image ? [{ id: row.id, title: row.title, image }] : []; });
 
   return {
     branches: branches.length ? branches : undefined,
@@ -81,5 +80,6 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     heroImage: images.get("hero-main"),
     communityImage: images.get("community-tournament"),
     galleryItems: galleryItems.length ? galleryItems : undefined,
+    featuredPromotion: promotions.find((promotion) => promotion.featured) ?? promotions[0],
   };
 }

@@ -1,4 +1,5 @@
 import { CheckCircle2, Flame } from "lucide-react";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Container } from "@/components/ui/Container";
 import type { Promotion } from "@/types";
@@ -14,6 +15,7 @@ export function PromotionsSection({ promotion, actionHref }: { promotion: Promot
         <div className="overflow-hidden rounded-3xl border border-tiger-orange/40 bg-gradient-to-br from-[#260806] via-[#120605] to-zinc-950 p-7 shadow-glow sm:p-12">
           <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
+              {promotion.image ? <div className="relative mb-7 aspect-[16/9] overflow-hidden rounded-2xl border border-white/10"><Image src={promotion.image.src} alt={promotion.image.alt} fill sizes="(max-width: 1023px) 100vw, 55vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" /></div> : null}
               <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-orange-300"><Flame className="size-4" /> Combo nổi bật</p>
               <h2 className="mt-4 text-4xl font-extrabold uppercase leading-tight text-white sm:text-6xl">{promotion.name}</h2>
               <p className="mt-5 text-4xl font-extrabold text-gradient sm:text-5xl">{formatPrice(promotion.price)}đ</p>
