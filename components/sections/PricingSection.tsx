@@ -15,8 +15,8 @@ export function PricingSection({ pricing, actionHref }: { pricing: PricingPlan[]
           {pricing.map((plan) => (
             <article key={plan.tierId} className={`relative min-w-[78vw] snap-center rounded-2xl border p-6 sm:min-w-0 ${plan.featured ? "border-tiger-orange bg-gradient-to-b from-tiger-red/20 to-white/[0.03]" : "border-white/10 bg-white/[0.03]"}`}>
               {plan.featured ? <span className="absolute right-4 top-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-300"><Crown className="size-3.5" /> Đỉnh cao</span> : null}
-              <h3 className="font-display text-xl font-black uppercase text-white">{plan.tier}</h3>
-              <div className="mt-6 flex items-end gap-1"><span className="font-display text-3xl font-black text-white">{formatPrice(plan.pricePerHour)}đ</span><span className="pb-1 text-sm text-zinc-500">/ giờ</span></div>
+              <h3 className="text-xl font-extrabold uppercase text-white">{plan.tier}</h3>
+              <div className="mt-6 flex items-end gap-1"><span className="text-3xl font-extrabold text-white">{formatPrice(plan.pricePerHour)}đ</span><span className="pb-1 text-sm text-zinc-500">/ giờ</span></div>
               <p className="mt-5 flex gap-2 text-sm leading-6 text-zinc-400"><Check className="mt-1 size-4 shrink-0 text-tiger-orange" />{plan.note}</p>
             </article>
           ))}

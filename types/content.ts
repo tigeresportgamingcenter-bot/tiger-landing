@@ -1,3 +1,8 @@
+export interface ContentImage {
+  src: string;
+  alt: string;
+}
+
 export interface Branch {
   id: string;
   name: string;
@@ -8,6 +13,7 @@ export interface Branch {
   openingHours: string | null;
   status: "active" | "temporarily-closed" | "unverified";
   description: string;
+  image: ContentImage | null;
 }
 
 export interface PcTier {
@@ -46,6 +52,42 @@ export interface Tournament {
   description: string;
 }
 
+export type SupportedGame = "FC Online" | "Valorant" | "TFT" | "AOE";
+export type HallOfFameStatus = "verified" | "placeholder";
+export type MemberTier = "Diamond" | "Platinum" | "Gold";
+
+export interface ChampionPlacement {
+  position: 1 | 2 | 3;
+  displayName: string;
+}
+
+export interface HallOfFameTournament {
+  id: string;
+  status: HallOfFameStatus;
+  name: string | null;
+  game: SupportedGame;
+  heldOn: string | null;
+  branchName: string | null;
+  placements: ChampionPlacement[];
+  image: ContentImage | null;
+}
+
+export interface HonoredMember {
+  id: string;
+  status: HallOfFameStatus;
+  displayName: string | null;
+  tier: MemberTier | null;
+  periodLabel: string | null;
+  consentConfirmed: boolean;
+  image: ContentImage | null;
+}
+
+export interface HallOfFameContent {
+  tournaments: HallOfFameTournament[];
+  members: HonoredMember[];
+  consentNotice: string;
+}
+
 export interface SocialLinks {
   facebook: string;
   zalo: string | null;
@@ -76,6 +118,7 @@ export interface HeroContent {
   description: string;
   supportingText: string;
   readinessLabel: string;
+  image: ContentImage | null;
 }
 
 export interface CommunityHighlight {
@@ -107,4 +150,6 @@ export interface SiteContent {
   communityHighlights: CommunityHighlight[];
   contactContent: ContactContent;
   featuredPromotion: Promotion | null;
+  communityImage: ContentImage | null;
+  hallOfFame: HallOfFameContent;
 }

@@ -1,11 +1,12 @@
 import { Swords, Trophy, Users } from "lucide-react";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import type { CommunityHighlight, Tournament } from "@/types";
+import type { CommunityHighlight, ContentImage, Tournament } from "@/types";
 
 const highlightIcons = { trophy: Trophy, users: Users };
 
-export function CommunitySection({ tournaments, highlights }: { tournaments: Tournament[]; highlights: CommunityHighlight[] }) {
+export function CommunitySection({ tournaments, highlights, image }: { tournaments: Tournament[]; highlights: CommunityHighlight[]; image: ContentImage | null }) {
   return (
     <section id="cong-dong" className="section-space bg-zinc-950">
       <Container>
@@ -18,6 +19,7 @@ export function CommunitySection({ tournaments, highlights }: { tournaments: Tou
                 return <div key={highlight.id} className="flex items-center gap-4 rounded-xl border border-white/10 p-4"><Icon className="size-6 shrink-0 text-tiger-orange" /><div><p className="font-bold text-white">{highlight.title}</p><p className="mt-1 text-sm text-zinc-500">{highlight.description}</p></div></div>;
               })}
             </div>
+            {image ? <div className="relative mt-6 aspect-video overflow-hidden rounded-2xl border border-white/10"><Image src={image.src} alt={image.alt} fill sizes="(max-width: 1023px) 100vw, 40vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" /></div> : null}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {tournaments.map((tournament, index) => (

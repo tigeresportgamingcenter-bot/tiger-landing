@@ -15,7 +15,7 @@ export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
         <div className="mt-8 space-y-3 md:hidden">
           {tiers.map((tier) => (
             <details key={tier.id} className="group rounded-xl border border-white/10 bg-white/[0.03] open:border-tiger-orange/40">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-5 font-display font-black uppercase text-white"><span>{tier.name}</span><span className="text-sm text-tiger-orange group-open:rotate-45">+</span></summary>
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-5 font-extrabold uppercase text-white"><span>{tier.name}</span><span className="text-sm text-tiger-orange group-open:rotate-45">+</span></summary>
               <div className="border-t border-white/10 px-5 py-4">
                 <p className="text-sm leading-6 text-zinc-400">{tier.description}</p>
                 <dl className="mt-4 grid grid-cols-2 gap-3">{specs.map(({ key, label }) => <div key={key}><dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{label}</dt><dd className="mt-1 text-xs font-semibold text-zinc-200">{tier[key]}</dd></div>)}</dl>
@@ -27,7 +27,7 @@ export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
           {tiers.map((tier, index) => (
             <article key={tier.id} className={`rounded-2xl border p-6 sm:p-8 ${index === 0 ? "border-tiger-orange/50 bg-gradient-to-br from-tiger-red/15 to-white/[0.03] shadow-glow" : "border-white/10 bg-white/[0.03]"}`}>
               <div className="flex items-start justify-between gap-4">
-                <div><p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Hạng máy</p><h3 className="mt-2 font-display text-3xl font-black uppercase text-white">{tier.name}</h3></div>
+                <div><p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Hạng máy</p><h3 className="mt-2 text-3xl font-extrabold uppercase text-white">{tier.name}</h3></div>
                 <span className="font-display text-4xl font-black text-white/10">0{index + 1}</span>
               </div>
               <p className="mt-4 text-sm leading-6 text-zinc-400">{tier.description}</p>

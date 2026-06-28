@@ -4,7 +4,7 @@
 
 :root { color-scheme: dark; }
 html { scroll-behavior: smooth; }
-body { background: #070707; color: #f4f4f5; padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); text-rendering: optimizeLegibility; }
+body { background: #070707; color: #f4f4f5; font-family: var(--font-be-vietnam-pro), sans-serif; padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); text-rendering: optimizeLegibility; }
 ::selection { background: rgba(255, 106, 0, 0.85); color: white; }
 
 @layer utilities {

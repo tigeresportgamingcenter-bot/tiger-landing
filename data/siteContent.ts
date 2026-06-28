@@ -1,4 +1,4 @@
-import type { CommunityHighlight, ContactContent, HeroContent, NavigationItem, SiteSettings } from "@/types";
+import type { CommunityHighlight, ContactContent, ContentImage, HeroContent, NavigationItem, SiteSettings } from "@/types";
 
 export const siteSettings: SiteSettings = {
   brandName: "Tiger Esports",
@@ -20,6 +20,12 @@ export const heroContent: HeroContent = {
   description: "Cyber Game cao cấp cho game thủ Thanh Hóa và Sầm Sơn.",
   supportingText: "Bốn cơ sở, nhiều hạng máy và giải đấu định kỳ.",
   readinessLabel: "Sẵn sàng cho trận đấu",
+  image: { src: "/images/hero/tiger-hero.webp", alt: "Không gian gaming tại Tiger Esports" },
+};
+
+export const communityImage: ContentImage = {
+  src: "/images/community/tournament.webp",
+  alt: "Giải đấu cộng đồng tại Tiger Esports",
 };
 
 export const communityHighlights: CommunityHighlight[] = [

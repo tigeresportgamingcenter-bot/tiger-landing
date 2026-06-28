@@ -1,4 +1,5 @@
 import { ArrowUpRight, Clock3, MapPin, Phone } from "lucide-react";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { Branch } from "@/types";
@@ -17,6 +18,7 @@ export function BranchesSection({ branches, fallbackPhone }: { branches: Branch[
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {branches.map((branch, index) => (
             <article key={branch.id} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-6 transition hover:-translate-y-1 hover:border-tiger-orange/50">
+              {branch.image ? <div className="relative -mx-6 -mt-6 mb-5 aspect-[16/9] overflow-hidden"><Image src={branch.image.src} alt={branch.image.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 25vw" className="object-cover transition duration-500 group-hover:scale-[1.03]" /><div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" /></div> : null}
               <span className="absolute right-4 top-2 font-display text-6xl font-black text-white/[0.035]">0{index + 1}</span>
               <MapPin className="size-7 text-tiger-orange" />
               <p className="mt-8 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">{branch.area}</p>

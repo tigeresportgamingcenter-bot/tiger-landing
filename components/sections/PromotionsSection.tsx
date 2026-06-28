@@ -15,8 +15,8 @@ export function PromotionsSection({ promotion, actionHref }: { promotion: Promot
           <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-orange-300"><Flame className="size-4" /> Combo nổi bật</p>
-              <h2 className="mt-4 font-display text-4xl font-black uppercase leading-tight text-white sm:text-6xl">{promotion.name}</h2>
-              <p className="mt-5 font-display text-4xl font-black text-gradient sm:text-5xl">{formatPrice(promotion.price)}đ</p>
+              <h2 className="mt-4 text-4xl font-extrabold uppercase leading-tight text-white sm:text-6xl">{promotion.name}</h2>
+              <p className="mt-5 text-4xl font-extrabold text-gradient sm:text-5xl">{formatPrice(promotion.price)}đ</p>
               <p className="mt-4 max-w-lg text-sm leading-6 text-zinc-500">{promotion.note}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/35 p-6 sm:p-8">

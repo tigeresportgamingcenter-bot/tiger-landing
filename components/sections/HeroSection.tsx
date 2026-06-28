@@ -1,4 +1,5 @@
 import { ArrowDown, Gamepad2, Zap } from "lucide-react";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Container } from "@/components/ui/Container";
 import type { HeroContent } from "@/types";
@@ -13,7 +14,8 @@ interface HeroSectionProps {
 export function HeroSection({ content, branchCount, tierCount, hotline }: HeroSectionProps) {
   return (
     <section id="trang-chu" className="hero-grid relative flex min-h-[760px] items-center overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_45%,rgba(239,43,35,0.2),transparent_28%),radial-gradient(circle_at_20%_80%,rgba(255,106,0,0.12),transparent_30%)]" />
+      {content.image ? <Image src={content.image.src} alt={content.image.alt} fill priority quality={82} sizes="100vw" className="object-cover" /> : null}
+      <div className={`absolute inset-0 ${content.image ? "bg-gradient-to-r from-black via-black/85 to-black/45" : "bg-[radial-gradient(circle_at_72%_45%,rgba(239,43,35,0.2),transparent_28%),radial-gradient(circle_at_20%_80%,rgba(255,106,0,0.12),transparent_30%)]"}`} />
       <div className="absolute right-[-10%] top-[22%] hidden select-none font-display text-[22vw] font-black leading-none text-white/[0.025] lg:block">T</div>
       <Container className="relative py-20 sm:py-28">
         <div className="max-w-3xl">
