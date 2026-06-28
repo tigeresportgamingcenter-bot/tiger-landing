@@ -1,0 +1,26 @@
+import { Container } from "@/components/ui/Container";
+import { TigerMark } from "@/components/ui/TigerMark";
+import type { NavigationItem, SiteSettings } from "@/types";
+
+interface HeaderProps {
+  navigation: NavigationItem[];
+  siteSettings: SiteSettings;
+  hotline: string;
+}
+
+export function Header({ navigation, siteSettings, hotline }: HeaderProps) {
+  return (
+    <header className="sticky inset-x-0 top-0 z-40 -mb-16 border-b border-white/10 bg-black/85 backdrop-blur-md sm:-mb-20">
+      <Container className="flex h-16 items-center justify-between sm:h-20">
+        <a href="#trang-chu" className="flex items-center gap-3" aria-label="Tiger Esports - Trang chủ">
+          <TigerMark />
+          <span className="font-display text-sm font-black uppercase tracking-wider text-white sm:text-base">{siteSettings.brandName}</span>
+        </a>
+        <nav className="hidden items-center gap-7 lg:flex" aria-label="Điều hướng chính">
+          {navigation.map((item) => <a key={item.href} href={item.href} className="text-sm font-semibold text-zinc-300 transition hover:text-tiger-orange">{item.label}</a>)}
+        </nav>
+        <a href={`tel:${hotline}`} className="inline-flex min-h-12 items-center rounded-lg border border-tiger-orange/60 px-4 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-tiger-orange">{siteSettings.primaryActionLabel}</a>
+      </Container>
+    </header>
+  );
+}

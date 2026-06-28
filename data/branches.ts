@@ -1,0 +1,8 @@
+import type { Branch } from "@/types";
+
+export const branches: Branch[] = [
+  { id: "tiger-x", name: "Tiger X", area: "Trường Thi", address: "Số 81 Trường Thi, Chung cư Đông Bắc, TP. Thanh Hóa", mapUrl: "https://maps.app.goo.gl/YhhbKfir9eCW8cuw5", phone: "0834650555", openingHours: null, status: "active", description: "Cơ sở Tiger Esports tại Chung cư Đông Bắc." },
+  { id: "tiger-2", name: "Tiger 2", area: "Quảng Tiến", address: "Số 155 Trần Hưng Đạo, Quảng Tiến, Sầm Sơn, Thanh Hóa", mapUrl: "https://maps.app.goo.gl/jrgpqAnG93FS8Jwm9", phone: "0834650555", openingHours: null, status: "active", description: "Cơ sở Tiger Esports tại Quảng Tiến, Sầm Sơn." },
+  { id: "tiger-3", name: "Tiger 3", area: "Quang Trung", address: "Tầng 2, tòa nhà Hùng Hiền, số 115 Quang Trung 3, phường Đông Vệ, TP. Thanh Hóa", mapUrl: "https://maps.app.goo.gl/rRoFBFjaJU3UBUVR9", phone: "0834650555", openingHours: null, status: "active", description: "Cơ sở Tiger Esports tại tòa nhà Hùng Hiền." },
+  { id: "tiger-4", name: "Tiger 4", area: "Quảng Tâm", address: "Đường 192 (đường vào UBND phường Quảng Tâm), Phố Môi, Quảng Tâm, Thanh Hóa", mapUrl: "https://maps.app.goo.gl/LtKRxwXtN6Pqqr2d9", phone: "0834650555", openingHours: null, status: "active", description: "Cơ sở Tiger Esports tại Phố Môi, Quảng Tâm." },
+];

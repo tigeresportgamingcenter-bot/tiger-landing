@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html { scroll-behavior: smooth; }
+body { background: #070707; color: #f4f4f5; padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); text-rendering: optimizeLegibility; }
+::selection { background: rgba(255, 106, 0, 0.85); color: white; }
+
+@layer utilities {
+  .text-gradient { background: linear-gradient(100deg, #ef2b23, #ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .section-space { @apply py-20 sm:py-28; }
+  .hero-grid { background-color: #070707; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 52px 52px; }
+}
+
+@layer components {
+  .card-action { @apply inline-flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-bold text-zinc-300 transition hover:border-tiger-orange/60 hover:text-white; }
+  .icon-action { @apply grid size-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition hover:border-tiger-orange/60 hover:text-white; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
+@media (min-width: 768px) { body { padding-bottom: 0; } }
