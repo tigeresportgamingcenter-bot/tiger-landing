@@ -9,6 +9,7 @@ import { socialLinks } from "@/data/socialLinks";
 import { tournaments } from "@/data/tournaments";
 import { communityHighlights, communityImage, contactContent, heroContent, navigation, siteSettings } from "@/data/siteContent";
 import type { ContentImage, SiteContent } from "@/types";
+import { getSupabaseContent } from "./supabaseContentService";
 
 function getAvailableImage(image: ContentImage | null): ContentImage | null {
   if (!image) return null;
@@ -17,7 +18,7 @@ function getAvailableImage(image: ContentImage | null): ContentImage | null {
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
-  return {
+  const fallback: SiteContent = {
     branches: branches.map((branch) => ({ ...branch, image: getAvailableImage(branch.image) })),
     pcTiers,
     pricing,
@@ -36,5 +37,25 @@ export async function getSiteContent(): Promise<SiteContent> {
       tournaments: hallOfFame.tournaments.map((tournament) => ({ ...tournament, image: getAvailableImage(tournament.image) })),
       members: hallOfFame.members.map((member) => ({ ...member, image: getAvailableImage(member.image) })),
     },
+    galleryItems: [],
   };
+
+  try {
+    const remote = await getSupabaseContent();
+    if (!remote) return fallback;
+    const remotePromotions = remote.promotions ?? fallback.promotions;
+    return {
+      ...fallback,
+      branches: remote.branches ?? fallback.branches,
+      promotions: remotePromotions,
+      tournaments: remote.tournaments ?? fallback.tournaments,
+      heroContent: { ...fallback.heroContent, image: remote.heroImage ?? fallback.heroContent.image },
+      communityImage: remote.communityImage ?? fallback.communityImage,
+      hallOfFame: remote.hallOfFame ?? fallback.hallOfFame,
+      featuredPromotion: remotePromotions[0] ?? fallback.featuredPromotion,
+      galleryItems: remote.galleryItems ?? fallback.galleryItems,
+    };
+  } catch {
+    return fallback;
+  }
 }

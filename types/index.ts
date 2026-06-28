@@ -3,6 +3,7 @@ export type {
   CommunityHighlight,
   ContentImage,
   ContactContent,
+  GalleryItem,
   HeroContent,
   HeroStat,
   HallOfFameContent,

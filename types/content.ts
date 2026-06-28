@@ -3,6 +3,12 @@ export interface ContentImage {
   alt: string;
 }
 
+export interface GalleryItem {
+  id: string;
+  title: string;
+  image: ContentImage;
+}
+
 export interface Branch {
   id: string;
   name: string;
@@ -152,4 +158,5 @@ export interface SiteContent {
   featuredPromotion: Promotion | null;
   communityImage: ContentImage | null;
   hallOfFame: HallOfFameContent;
+  galleryItems: GalleryItem[];
 }
