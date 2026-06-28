@@ -3,14 +3,14 @@ import type { HallOfFameContent } from "@/types";
 export const hallOfFame: HallOfFameContent = {
   tournaments: [
     {
-      id: "tournament-fc-2026",
-      status: "placeholder",
-      name: null,
+      id: "fc-open-cup-summer-2026",
+      status: "verified",
+      name: "FC Online Tiger Open Cup Summer 2026",
       game: "FC Online",
-      heldOn: null,
-      branchName: null,
+      heldOn: "2026-06-27",
+      branchName: "Tiger 4 Phố Môi",
       placements: [],
-      image: { src: "/images/hall-of-fame/tournament-fc-2026.webp", alt: "Giải đấu FC Online tại Tiger Esports" },
+      image: { src: "/images/hall-of-fame/tournament-fc-2026.webp", alt: "Trao giải FC Online Tiger Open Cup Summer 2026 tại Tiger 4 Phố Môi" },
     },
     {
       id: "tournament-valorant-2026",

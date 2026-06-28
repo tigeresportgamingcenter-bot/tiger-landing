@@ -30,7 +30,7 @@ function TournamentCard({ tournament }: { tournament: HallOfFameTournament }) {
         <span className="inline-flex rounded-full bg-tiger-orange/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-300">{tournament.game}</span>
         <h4 className="mt-4 text-xl font-extrabold text-white">{tournament.name}</h4>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-500"><span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" />{formatDate(tournament.heldOn!)}</span><span className="flex items-center gap-1.5"><MapPin className="size-3.5" />{tournament.branchName}</span></div>
-        <ol className="mt-5 space-y-2">{tournament.placements.slice(0, 3).map((placement) => <li key={placement.position} className="flex items-center justify-between rounded-lg bg-black/35 px-3 py-2.5"><span className="flex items-center gap-2 text-xs font-bold text-orange-300"><Medal className="size-4" />{placementLabels[placement.position]}</span><span className="text-sm font-semibold text-zinc-200">{placement.displayName}</span></li>)}</ol>
+        {tournament.placements.length > 0 ? <ol className="mt-5 space-y-2">{tournament.placements.slice(0, 3).map((placement) => <li key={placement.position} className="flex items-center justify-between rounded-lg bg-black/35 px-3 py-2.5"><span className="flex items-center gap-2 text-xs font-bold text-orange-300"><Medal className="size-4" />{placementLabels[placement.position]}</span><span className="text-sm font-semibold text-zinc-200">{placement.displayName}</span></li>)}</ol> : null}
       </div>
     </article>
   );
@@ -64,18 +64,23 @@ interface HallOfFameSectionProps {
 }
 
 export function HallOfFameSection({ content, communityUrl }: HallOfFameSectionProps) {
+  const verifiedTournaments = content.tournaments.filter((tournament) => tournament.status === "verified");
+  const hasPendingTournaments = content.tournaments.some((tournament) => tournament.status === "placeholder");
+  const visibleMembers = content.members.filter((member) => member.status === "verified" && member.consentConfirmed);
+
   return (
     <section className="section-space bg-black" aria-labelledby="hall-of-fame-title">
       <Container>
         <div id="hall-of-fame-title"><SectionHeading eyebrow="Hall of Fame" title="Dấu ấn cộng đồng Tiger" description="Nơi ghi nhận thành tích giải đấu và những hội viên đã đồng ý xuất hiện trên bảng vàng Tiger Esports." /></div>
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
           <div>
-            <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Vinh danh nhà vô địch</h3>{content.tournaments.length > 1 ? <span className="text-xs text-zinc-600 sm:hidden">Vuốt để xem thêm →</span> : null}</div>
-            <div className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">{content.tournaments.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}</div>
+            <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Vinh danh nhà vô địch</h3>{verifiedTournaments.length > 1 ? <span className="text-xs text-zinc-600 sm:hidden">Vuốt để xem thêm →</span> : null}</div>
+            {verifiedTournaments.length > 0 ? <div className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">{verifiedTournaments.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}</div> : null}
+            {hasPendingTournaments ? <p className="mt-4 text-sm text-zinc-600">Các giải đấu tiếp theo đang được cập nhật.</p> : null}
           </div>
           <div>
-            <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Hội viên thân thiết</h3>{content.members.length > 1 ? <span className="text-xs text-zinc-600 sm:hidden">Vuốt để xem thêm →</span> : null}</div>
-            <div className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:overflow-visible sm:px-0">{content.members.map((member) => <MemberCard key={member.id} member={member} />)}</div>
+            <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Hội viên thân thiết</h3>{visibleMembers.length > 1 ? <span className="text-xs text-zinc-600 sm:hidden">Vuốt để xem thêm →</span> : null}</div>
+            {visibleMembers.length > 0 ? <div className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:overflow-visible sm:px-0">{visibleMembers.map((member) => <MemberCard key={member.id} member={member} />)}</div> : null}
             <p className="mt-4 text-xs leading-5 text-zinc-600">{content.consentNotice}</p>
           </div>
         </div>
