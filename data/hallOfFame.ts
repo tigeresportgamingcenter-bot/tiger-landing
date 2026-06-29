@@ -11,6 +11,7 @@ export const hallOfFame: HallOfFameContent = {
       branchName: "Tiger 4 Phố Môi",
       placements: [],
       image: { src: "/images/hall-of-fame/tournament-fc-2026.webp", alt: "Trao giải FC Online Tiger Open Cup Summer 2026 tại Tiger 4 Phố Môi" },
+      video: null,
     },
     {
       id: "tournament-valorant-2026",
@@ -21,6 +22,7 @@ export const hallOfFame: HallOfFameContent = {
       branchName: null,
       placements: [],
       image: { src: "/images/hall-of-fame/tournament-valorant-2026.webp", alt: "Giải đấu Valorant tại Tiger Esports" },
+      video: null,
     },
   ],
   members: [

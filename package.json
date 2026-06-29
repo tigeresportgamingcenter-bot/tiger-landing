@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
-    "check:phase2a": "node scripts/check-phase2a.mjs"
+    "check:phase2a": "node scripts/check-phase2a.mjs",
+    "check:phase2b": "node scripts/check-phase2a.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

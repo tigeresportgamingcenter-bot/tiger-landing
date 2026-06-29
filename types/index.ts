@@ -2,6 +2,7 @@ export type {
   Branch,
   CommunityHighlight,
   ContentImage,
+  ContentVideo,
   ContactContent,
   GalleryItem,
   HeroContent,
@@ -12,6 +13,7 @@ export type {
   HonoredMember,
   ChampionPlacement,
   MemberTier,
+  MediaProvider,
   NavigationItem,
   PcTier,
   PricingPlan,
@@ -20,5 +22,7 @@ export type {
   SiteSettings,
   SocialLinks,
   Tournament,
+  TournamentEvent,
+  TournamentStatus,
   SupportedGame,
 } from "./content";

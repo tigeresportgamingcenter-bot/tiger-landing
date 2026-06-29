@@ -3,10 +3,21 @@ export interface ContentImage {
   alt: string;
 }
 
+export type MediaProvider = "upload" | "youtube" | "facebook" | "external";
+
+export interface ContentVideo {
+  src: string;
+  provider: MediaProvider;
+  poster: ContentImage | null;
+}
+
 export interface GalleryItem {
   id: string;
   title: string;
-  image: ContentImage;
+  caption: string | null;
+  mediaType: "image" | "video";
+  image: ContentImage | null;
+  video: ContentVideo | null;
 }
 
 export interface Branch {
@@ -25,10 +36,17 @@ export interface Branch {
 export interface PcTier {
   id: string;
   name: string;
+  subtitle: string | null;
   cpu: string;
   gpu: string;
   ram: string;
   monitor: string;
+  mainboard: string | null;
+  storage: string | null;
+  peripherals: string | null;
+  note: string | null;
+  branchScope: string | null;
+  featured: boolean;
   description: string;
 }
 
@@ -61,6 +79,7 @@ export interface Tournament {
 }
 
 export type SupportedGame = "FC Online" | "Valorant" | "TFT" | "AOE";
+export type TournamentStatus = "upcoming" | "registration_open" | "ongoing" | "completed";
 export type HallOfFameStatus = "verified" | "placeholder";
 export type MemberTier = "Diamond" | "Platinum" | "Gold";
 
@@ -78,6 +97,7 @@ export interface HallOfFameTournament {
   branchName: string | null;
   placements: ChampionPlacement[];
   image: ContentImage | null;
+  video: ContentVideo | null;
 }
 
 export interface HonoredMember {
@@ -94,6 +114,26 @@ export interface HallOfFameContent {
   tournaments: HallOfFameTournament[];
   members: HonoredMember[];
   consentNotice: string;
+}
+
+export interface TournamentEvent {
+  id: string;
+  slug: string;
+  name: string;
+  game: SupportedGame;
+  description: string;
+  heldOn: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  branchName: string | null;
+  placements: ChampionPlacement[];
+  image: ContentImage | null;
+  video: ContentVideo | null;
+  rules: string | null;
+  entryFee: number | null;
+  status: TournamentStatus;
+  registrationUrl: string | null;
+  registrationOpen: boolean;
 }
 
 export interface SocialLinks {
@@ -161,4 +201,5 @@ export interface SiteContent {
   communityImage: ContentImage | null;
   hallOfFame: HallOfFameContent;
   galleryItems: GalleryItem[];
+  tournamentEvents: TournamentEvent[];
 }

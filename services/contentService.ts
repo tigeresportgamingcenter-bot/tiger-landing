@@ -9,7 +9,8 @@ import { socialLinks } from "@/data/socialLinks";
 import { tournaments } from "@/data/tournaments";
 import { communityHighlights, communityImage, contactContent, heroContent, navigation, siteSettings } from "@/data/siteContent";
 import type { ContentImage, SiteContent } from "@/types";
-import { getSupabaseContent } from "./supabaseContentService";
+import { getSupabaseContent, getSupabaseTournamentBySlug } from "./supabaseContentService";
+import type { TournamentEvent } from "@/types";
 
 function getAvailableImage(image: ContentImage | null): ContentImage | null {
   if (!image) return null;
@@ -38,6 +39,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       members: hallOfFame.members.map((member) => ({ ...member, image: getAvailableImage(member.image) })),
     },
     galleryItems: [],
+    tournamentEvents: [],
   };
 
   try {
@@ -54,8 +56,40 @@ export async function getSiteContent(): Promise<SiteContent> {
       hallOfFame: remote.hallOfFame ?? fallback.hallOfFame,
       featuredPromotion: remote.featuredPromotion ?? remotePromotions.find((promotion) => promotion.featured) ?? fallback.featuredPromotion,
       galleryItems: remote.galleryItems ?? fallback.galleryItems,
+      pcTiers: remote.pcTiers ?? fallback.pcTiers,
+      tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
     };
   } catch {
     return fallback;
   }
+}
+
+export async function getPublishedTournamentBySlug(slug: string): Promise<TournamentEvent | null> {
+  try {
+    const remote = await getSupabaseTournamentBySlug(slug);
+    if (remote) return remote;
+  } catch {
+    // Static fallback below keeps public pages available.
+  }
+  const staticTournament = hallOfFame.tournaments.find((item) => item.status === "verified" && item.id === slug);
+  if (!staticTournament || !staticTournament.name) return null;
+  return {
+    id: staticTournament.id,
+    slug: staticTournament.id,
+    name: staticTournament.name,
+    game: staticTournament.game,
+    description: "",
+    heldOn: staticTournament.heldOn,
+    startsAt: null,
+    endsAt: null,
+    branchName: staticTournament.branchName,
+    placements: staticTournament.placements,
+    image: getAvailableImage(staticTournament.image),
+    video: staticTournament.video,
+    rules: null,
+    entryFee: null,
+    status: "completed",
+    registrationUrl: null,
+    registrationOpen: false,
+  };
 }

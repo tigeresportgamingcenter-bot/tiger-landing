@@ -8,7 +8,8 @@ Checklist này chỉ dùng Publishable key. Không nhập, lưu hoặc triển k
 - [ ] Tạo project production, chọn region phù hợp và lưu database password ở password manager.
 - [ ] Mở **SQL Editor** và chạy toàn bộ `supabase/migrations/20260628_phase2a.sql`.
 - [ ] Chạy tiếp `supabase/migrations/20260628_phase2a_hardening.sql`.
-- [ ] Xác nhận Table Editor có: `admin_users`, `branches`, `promotions`, `tournaments`, `hall_of_fame_members`, `site_images`, `gallery_items`.
+- [ ] Chạy tiếp `supabase/migrations/20260629_phase2b_tournaments_and_pc_tiers.sql`.
+- [ ] Xác nhận Table Editor có: `admin_users`, `branches`, `promotions`, `tournaments`, `hall_of_fame_members`, `site_images`, `gallery_items`, `pc_tiers`.
 - [ ] Xác nhận Storage có: `hero`, `branches`, `community`, `hall-of-fame`, `members`.
 - [ ] Xác nhận RLS đang bật trên tất cả bảng public.
 
@@ -51,7 +52,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 - [ ] Không thêm `service_role`, database password hoặc access token.
-- [ ] Chạy `npm run check:phase2a`.
+- [ ] Chạy `npm run check:phase2b`.
 - [ ] Nếu máy có Git, chạy `git check-ignore .env.local`; kết quả phải trả về `.env.local`.
 - [ ] Chạy `git status --short` và xác nhận `.env.local` không xuất hiện.
 - [ ] Chạy `npm run dev`, mở `/admin/login` và đăng nhập.
@@ -66,6 +67,9 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - [ ] Bật verified và published cho ảnh thử.
 - [ ] Dùng khóa `hero-main` để thử ảnh hero hoặc `community-tournament` cho ảnh cộng đồng.
 - [ ] Tạo một hội viên chưa consent; xác nhận landing không hiển thị.
+- [ ] Tạo giải có `registration_open`, URL đăng ký và kiểm tra hai CTA ngoài landing.
+- [ ] Nhập Top 1/2/3 bằng ba ô riêng và kiểm tra trang chi tiết giải.
+- [ ] Tạo một hạng máy draft, sau đó verified + published và kiểm tra fallback/hiển thị.
 - [ ] Chỉ bật consent sau khi có sự đồng ý thực tế của khách.
 - [ ] Thử sửa, bật/tắt và xóa một bản ghi thử; xác nhận hộp thoại trước khi xóa.
 

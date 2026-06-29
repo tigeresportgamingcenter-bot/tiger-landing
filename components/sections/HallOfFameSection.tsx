@@ -1,5 +1,6 @@
 import { CalendarDays, ChevronRight, Crown, MapPin, Medal, Trophy, UserRoundCheck } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { HallOfFameContent, HallOfFameTournament, HonoredMember } from "@/types";
@@ -23,14 +24,17 @@ function TournamentCard({ tournament }: { tournament: HallOfFameTournament }) {
     );
   }
 
+  const visual = tournament.image ?? tournament.video?.poster;
   return (
-    <article className="min-w-[82vw] snap-center overflow-hidden rounded-2xl border border-tiger-orange/30 bg-white/[0.035] sm:min-w-0">
-      {tournament.image ? <div className="relative aspect-[16/9]"><Image src={tournament.image.src} alt={tournament.image.alt} fill sizes="(max-width: 639px) 82vw, 36vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" /></div> : null}
+    <article className="relative min-w-[82vw] snap-center overflow-hidden rounded-2xl border border-tiger-orange/30 bg-white/[0.035] transition hover:border-tiger-orange sm:min-w-0">
+      <Link href={`/giai-dau/${tournament.id}`} aria-label={`Xem chi tiết ${tournament.name}`} className="absolute inset-0 z-[1]" />
+      {visual ? <div className="relative aspect-[16/9]"><Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 82vw, 36vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" /></div> : null}
       <div className="p-6">
         <span className="inline-flex rounded-full bg-tiger-orange/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-300">{tournament.game}</span>
         <h4 className="mt-4 text-xl font-extrabold text-white">{tournament.name}</h4>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-zinc-500"><span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" />{formatDate(tournament.heldOn!)}</span><span className="flex items-center gap-1.5"><MapPin className="size-3.5" />{tournament.branchName}</span></div>
         {tournament.placements.length > 0 ? <ol className="mt-5 space-y-2">{tournament.placements.slice(0, 3).map((placement) => <li key={placement.position} className="flex items-center justify-between rounded-lg bg-black/35 px-3 py-2.5"><span className="flex items-center gap-2 text-xs font-bold text-orange-300"><Medal className="size-4" />{placementLabels[placement.position]}</span><span className="text-sm font-semibold text-zinc-200">{placement.displayName}</span></li>)}</ol> : null}
+        {tournament.video ? <Link href={`/giai-dau/${tournament.id}#recap`} className="relative z-[2] mt-5 inline-flex min-h-12 items-center justify-center rounded-lg border border-tiger-orange/50 px-4 text-sm font-bold text-white hover:bg-tiger-orange">Xem recap</Link> : null}
       </div>
     </article>
   );

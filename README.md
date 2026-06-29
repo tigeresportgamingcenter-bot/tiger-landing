@@ -51,6 +51,24 @@ Kiểm tra readiness mà không in giá trị secret:
 npm run check:phase2a
 ```
 
+Sau khi triển khai Phase 2B, chạy thêm migration `supabase/migrations/20260629_phase2b_tournaments_and_pc_tiers.sql` và dùng:
+
+```bash
+npm run check:phase2b
+```
+
+Dashboard giải đấu dùng ba ô Top 1/Top 2/Top 3 nhưng tiếp tục lưu vào `placements` JSONB để tương thích dữ liệu cũ. Giải public có trang `/giai-dau/[slug]`; giải mở đăng ký cần URL hợp lệ, `registration_open`, `published` và `verified`. Mục **Dàn máy / Cấu hình** quản trị bảng `pc_tiers`; nếu chưa có bản ghi public, landing tự dùng dữ liệu tĩnh.
+
+Media/video dùng migration `supabase/migrations/20260629_phase2b_media_video.sql`. Migration bổ sung media cho `gallery_items` và `tournaments`, đồng thời tạo bucket public `videos` giới hạn 25MB cho MP4/WebM. Chỉ admin trong `admin_users` được upload, sửa hoặc xóa file.
+
+Trong form Gallery và Giải đấu:
+
+- Ảnh có thể chọn trực tiếp JPEG/PNG/WebP tối đa 5MB hoặc dùng URL Supabase Storage hợp lệ.
+- Video có thể upload MP4/WebM tối đa 25MB hoặc dán URL YouTube, Facebook hay URL ngoài rồi chọn đúng nguồn video.
+- Poster video có thể upload giống ảnh thông thường.
+- Video không tự phát hàng loạt; người xem phải bấm Play hoặc “Xem recap”.
+- Top 1/2/3 là ba ô riêng và có thể để trống.
+
 ### 1. Tạo project
 
 1. Tạo project mới tại [Supabase Dashboard](https://supabase.com/dashboard).
