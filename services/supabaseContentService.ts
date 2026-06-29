@@ -13,6 +13,7 @@ export interface SupabaseContent {
   featuredPromotion?: Promotion;
   pcTiers?: PcTier[];
   tournamentEvents?: TournamentEvent[];
+  completedTournamentEvents?: TournamentEvent[];
 }
 
 const games: SupportedGame[] = ["FC Online", "Valorant", "TFT", "AOE"];
@@ -51,6 +52,11 @@ function safeUrl(value: unknown): string | null {
   }
 }
 
+function safeTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => item.trim()).slice(0, 6);
+}
+
 function safeVideo(src: unknown, provider: unknown, posterUrl: unknown, alt: string): ContentVideo | null {
   const url = safeUrl(src);
   if (!url || !mediaProviders.includes(provider as MediaProvider)) return null;
@@ -80,6 +86,11 @@ function mapTournament(row: Record<string, unknown>): TournamentEvent | null {
     status,
     registrationUrl: safeUrl(row.registration_url),
     registrationOpen,
+    showInHallOfFame: row.show_in_hall_of_fame === true,
+    summaryTitle: typeof row.summary_title === "string" && row.summary_title.trim() ? row.summary_title : null,
+    summaryContent: typeof row.summary_content === "string" && row.summary_content.trim() ? row.summary_content : null,
+    highlights: safeTextList(row.highlights),
+    facebookPostUrl: safeUrl(row.facebook_post_url),
   };
 }
 
@@ -114,7 +125,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const tournamentRows = (tournamentResult.error ? [] : tournamentResult.data ?? []).filter((row) => games.includes(row.game as SupportedGame));
   const mappedEvents = tournamentRows.map((row) => mapTournament(row)).filter((event): event is TournamentEvent => Boolean(event));
   const tournaments: Tournament[] = mappedEvents.map((event) => ({ id: event.slug, game: event.game, description: event.description }));
-  const hallTournaments: HallOfFameTournament[] = mappedEvents.filter((event) => event.status === "completed").map((event) => ({ id: event.slug, status: "verified", name: event.name, game: event.game, heldOn: event.heldOn ?? event.startsAt, branchName: event.branchName, placements: event.placements, image: event.image, video: event.video }));
+  const hallTournaments: HallOfFameTournament[] = mappedEvents.filter((event) => event.status === "completed" && event.showInHallOfFame).map((event) => ({ id: event.slug, slug: event.slug, status: "verified", name: event.name, game: event.game, heldOn: event.heldOn ?? event.startsAt, branchName: event.branchName, placements: event.placements, image: event.image, video: event.video, showInHallOfFame: true }));
   const members: HonoredMember[] = (memberResult.error ? [] : memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({ id: row.id, status: "verified", displayName: row.display_name, tier: row.tier as MemberTier, periodLabel: row.period_label, consentConfirmed: true, image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`) }));
   const images = new Map<string, ContentImage>();
   for (const row of imageResult.error ? [] : imageResult.data ?? []) { const image = safeImage(row.public_url, row.alt_text); if (image) images.set(row.image_key, image); }
@@ -128,18 +139,20 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const pcTiers: PcTier[] = (pcTierResult.error ? [] : pcTierResult.data ?? []).map((row) => ({ id: row.slug, name: row.name, subtitle: row.subtitle, cpu: row.cpu, gpu: row.gpu, ram: row.ram, monitor: row.monitor, mainboard: row.mainboard, storage: row.storage, peripherals: row.peripherals, note: row.note, branchScope: row.branch_scope, featured: Boolean(row.featured), description: row.subtitle || row.note || "" }));
   const statusPriority: Record<TournamentStatus, number> = { registration_open: 0, ongoing: 1, upcoming: 2, completed: 3 };
   const tournamentEvents = mappedEvents.filter((event) => event.status !== "completed").sort((a, b) => statusPriority[a.status] - statusPriority[b.status] || String(a.startsAt ?? a.heldOn ?? "").localeCompare(String(b.startsAt ?? b.heldOn ?? "")));
+  const completedTournamentEvents = mappedEvents.filter((event) => event.status === "completed").sort((a, b) => String(b.heldOn ?? b.startsAt ?? "").localeCompare(String(a.heldOn ?? a.startsAt ?? "")));
 
   return {
     branches: branches.length ? branches : undefined,
     promotions: promotions.length ? promotions : undefined,
     tournaments: tournaments.length ? tournaments : undefined,
-    hallOfFame: hallTournaments.length || members.length ? { tournaments: hallTournaments, members, consentNotice: "Danh sách vinh danh theo từng tháng và chỉ hiển thị khi khách hàng đồng ý." } : undefined,
+    hallOfFame: { tournaments: hallTournaments, members, consentNotice: "Danh sách vinh danh theo từng tháng và chỉ hiển thị khi khách hàng đồng ý." },
     heroImage: images.get("hero-main"),
     communityImage: images.get("community-tournament"),
     galleryItems: galleryItems.length ? galleryItems : undefined,
     featuredPromotion: promotions.find((promotion) => promotion.featured) ?? promotions[0],
     pcTiers: pcTiers.length ? pcTiers : undefined,
     tournamentEvents: tournamentEvents.length ? tournamentEvents : undefined,
+    completedTournamentEvents: completedTournamentEvents.length ? completedTournamentEvents : undefined,
   };
 }
 

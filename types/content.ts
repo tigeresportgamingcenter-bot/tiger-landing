@@ -90,6 +90,7 @@ export interface ChampionPlacement {
 
 export interface HallOfFameTournament {
   id: string;
+  slug: string;
   status: HallOfFameStatus;
   name: string | null;
   game: SupportedGame;
@@ -98,6 +99,7 @@ export interface HallOfFameTournament {
   placements: ChampionPlacement[];
   image: ContentImage | null;
   video: ContentVideo | null;
+  showInHallOfFame: boolean;
 }
 
 export interface HonoredMember {
@@ -134,6 +136,11 @@ export interface TournamentEvent {
   status: TournamentStatus;
   registrationUrl: string | null;
   registrationOpen: boolean;
+  showInHallOfFame: boolean;
+  summaryTitle: string | null;
+  summaryContent: string | null;
+  highlights: string[];
+  facebookPostUrl: string | null;
 }
 
 export interface SocialLinks {
@@ -202,4 +209,5 @@ export interface SiteContent {
   hallOfFame: HallOfFameContent;
   galleryItems: GalleryItem[];
   tournamentEvents: TournamentEvent[];
+  completedTournamentEvents: TournamentEvent[];
 }

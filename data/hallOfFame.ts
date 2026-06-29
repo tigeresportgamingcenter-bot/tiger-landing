@@ -4,6 +4,7 @@ export const hallOfFame: HallOfFameContent = {
   tournaments: [
     {
       id: "fc-open-cup-summer-2026",
+      slug: "fc-open-cup-summer-2026",
       status: "verified",
       name: "FC Online Tiger Open Cup Summer 2026",
       game: "FC Online",
@@ -12,9 +13,11 @@ export const hallOfFame: HallOfFameContent = {
       placements: [],
       image: { src: "/images/hall-of-fame/tournament-fc-2026.webp", alt: "Trao giải FC Online Tiger Open Cup Summer 2026 tại Tiger 4 Phố Môi" },
       video: null,
+      showInHallOfFame: true,
     },
     {
       id: "tournament-valorant-2026",
+      slug: "tournament-valorant-2026",
       status: "placeholder",
       name: null,
       game: "Valorant",
@@ -23,6 +26,7 @@ export const hallOfFame: HallOfFameContent = {
       placements: [],
       image: { src: "/images/hall-of-fame/tournament-valorant-2026.webp", alt: "Giải đấu Valorant tại Tiger Esports" },
       video: null,
+      showInHallOfFame: false,
     },
   ],
   members: [

@@ -40,6 +40,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     },
     galleryItems: [],
     tournamentEvents: [],
+    completedTournamentEvents: [],
   };
 
   try {
@@ -58,6 +59,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       galleryItems: remote.galleryItems ?? fallback.galleryItems,
       pcTiers: remote.pcTiers ?? fallback.pcTiers,
       tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
+      completedTournamentEvents: remote.completedTournamentEvents ?? fallback.completedTournamentEvents,
     };
   } catch {
     return fallback;
@@ -91,5 +93,10 @@ export async function getPublishedTournamentBySlug(slug: string): Promise<Tourna
     status: "completed",
     registrationUrl: null,
     registrationOpen: false,
+    showInHallOfFame: staticTournament.showInHallOfFame,
+    summaryTitle: null,
+    summaryContent: null,
+    highlights: [],
+    facebookPostUrl: null,
   };
 }
