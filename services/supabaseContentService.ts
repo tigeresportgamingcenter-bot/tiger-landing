@@ -17,6 +17,12 @@ export interface SupabaseContent {
 }
 
 const games: SupportedGame[] = ["FC Online", "Valorant", "TFT", "AOE"];
+const communityGameDescriptions: Record<SupportedGame, string> = {
+  "FC Online": "Sân chơi bóng đá điện tử cho những trận giao hữu, leo rank và giải đấu cộng đồng.",
+  Valorant: "Không gian đấu đội, phối hợp chiến thuật và rèn kỹ năng FPS cùng đồng đội.",
+  TFT: "Cộng đồng chiến thuật dành cho người chơi Đấu Trường Chân Lý tại Tiger.",
+  AOE: "Kết nối những game thủ chiến thuật yêu thích AOE và các kèo giao lưu địa phương.",
+};
 const memberTiers: MemberTier[] = ["Diamond", "Platinum", "Gold"];
 const tournamentStatuses: TournamentStatus[] = ["upcoming", "registration_open", "ongoing", "completed"];
 const mediaProviders: MediaProvider[] = ["upload", "youtube", "facebook", "external"];
@@ -124,7 +130,11 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const promotions: Promotion[] = (promotionResult.error ? [] : promotionResult.data ?? []).map((row) => ({ id: row.slug, name: row.name, price: row.price, highlights: Array.isArray(row.highlights) ? row.highlights.filter((item: unknown): item is string => typeof item === "string") : [], note: row.note, featured: Boolean(row.featured), image: safeImage(row.image_url, `Ảnh khuyến mãi ${row.name}`) }));
   const tournamentRows = (tournamentResult.error ? [] : tournamentResult.data ?? []).filter((row) => games.includes(row.game as SupportedGame));
   const mappedEvents = tournamentRows.map((row) => mapTournament(row)).filter((event): event is TournamentEvent => Boolean(event));
-  const tournaments: Tournament[] = mappedEvents.map((event) => ({ id: event.slug, game: event.game, description: event.description }));
+  const tournaments: Tournament[] = games.map((game) => ({
+    id: game.toLowerCase().replaceAll(" ", "-"),
+    game,
+    description: communityGameDescriptions[game],
+  }));
   const hallTournaments: HallOfFameTournament[] = mappedEvents.filter((event) => event.status === "completed" && event.showInHallOfFame).map((event) => ({ id: event.slug, slug: event.slug, status: "verified", name: event.name, game: event.game, heldOn: event.heldOn ?? event.startsAt, branchName: event.branchName, placements: event.placements, image: event.image, video: event.video, showInHallOfFame: true }));
   const members: HonoredMember[] = (memberResult.error ? [] : memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({ id: row.id, status: "verified", displayName: row.display_name, tier: row.tier as MemberTier, periodLabel: row.period_label, consentConfirmed: true, image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`) }));
   const images = new Map<string, ContentImage>();

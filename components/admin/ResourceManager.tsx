@@ -15,6 +15,7 @@ interface ResourceManagerProps {
   resource: string;
   fields: AdminField[];
   records: Array<Record<string, unknown>>;
+  note?: string;
 }
 
 function Field({ field, record, resource }: { field: AdminField; record?: Record<string, unknown>; resource: string }) {
@@ -86,11 +87,14 @@ function Editor({ resource, fields, record }: { resource: string; fields: AdminF
   );
 }
 
-export function ResourceManager({ title, resource, fields, records }: ResourceManagerProps) {
+export function ResourceManager({ title, resource, fields, records, note }: ResourceManagerProps) {
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between gap-4">
-        <h2 className="text-2xl font-extrabold text-white">{title}</h2>
+        <div>
+          <h2 className="text-2xl font-extrabold text-white">{title}</h2>
+          {note ? <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{note}</p> : null}
+        </div>
         <span className="text-xs text-zinc-600">{records.length} mục</span>
       </div>
       <details className="rounded-xl border border-tiger-orange/25 bg-tiger-orange/5 p-4">
