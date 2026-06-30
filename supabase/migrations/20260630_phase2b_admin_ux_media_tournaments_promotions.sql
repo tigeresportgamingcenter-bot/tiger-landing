@@ -2,9 +2,16 @@
 -- Idempotent and backward-compatible. Does not delete existing data.
 
 alter table public.promotions
-  add column if not exists branch_scope text;
+  add column if not exists branch_scope text,
+  add column if not exists valid_from date,
+  add column if not exists valid_until date,
+  add column if not exists image_url text,
+  add column if not exists featured boolean not null default false,
+  add column if not exists published boolean not null default false,
+  add column if not exists verified boolean not null default false;
 
 alter table public.tournaments
+  add column if not exists description text not null default '',
   add column if not exists image_url text,
   add column if not exists image_alt text,
   add column if not exists video_url text,
@@ -21,7 +28,11 @@ alter table public.tournaments
   add column if not exists summary_content text,
   add column if not exists highlights jsonb not null default '[]'::jsonb,
   add column if not exists facebook_post_url text,
-  add column if not exists show_in_hall_of_fame boolean not null default false;
+  add column if not exists show_in_hall_of_fame boolean not null default false,
+  add column if not exists featured boolean not null default false,
+  add column if not exists sort_order integer not null default 0,
+  add column if not exists published boolean not null default false,
+  add column if not exists verified boolean not null default false;
 
 alter table public.tournaments drop constraint if exists tournaments_status_check;
 alter table public.tournaments add constraint tournaments_status_check
@@ -107,7 +118,7 @@ create index if not exists promotions_public_validity_idx
   where published = true and verified = true;
 
 create index if not exists tournaments_public_status_hof_idx
-  on public.tournaments (status, show_in_hall_of_fame, starts_at, held_on)
+  on public.tournaments (status, show_in_hall_of_fame, sort_order, starts_at, held_on)
   where published = true and verified = true;
 
 create index if not exists gallery_items_public_media_idx
