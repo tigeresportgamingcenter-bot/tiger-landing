@@ -10,7 +10,7 @@ type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments
 
 const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox", group: "status" }, { name: "verified", label: "Đã xác minh", type: "checkbox", group: "status" }];
 const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea", group: "details" }, { name: "image_url", label: "Ảnh cơ sở", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
-const promotionFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên chương trình", required: true }, { name: "price", label: "Giá / giá trị ưu đãi", type: "number", required: true }, { name: "highlight_1", label: "Điểm nổi bật 1", group: "details" }, { name: "highlight_2", label: "Điểm nổi bật 2", group: "details" }, { name: "highlight_3", label: "Điểm nổi bật 3", group: "details" }, { name: "highlight_4", label: "Điểm nổi bật 4", group: "details" }, { name: "highlight_5", label: "Điểm nổi bật 5", group: "details" }, { name: "note", label: "Ghi chú / điều kiện", type: "textarea", group: "details" }, { name: "branch_scope", label: "Cơ sở áp dụng", group: "details" }, { name: "image_url", label: "Ảnh khuyến mãi", type: "image", group: "media" }, { name: "valid_from", label: "Bắt đầu", type: "date", group: "status" }, { name: "valid_until", label: "Kết thúc", type: "date", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
+const promotionFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên chương trình", required: true }, { name: "promotion_type", label: "Loại chương trình", type: "select", options: [{ value: "combo", label: "Combo giờ chơi" }, { value: "topup_bonus", label: "Ưu đãi nạp tiền" }, { value: "gift", label: "Tặng quà" }, { value: "event", label: "Sự kiện" }, { value: "discount", label: "Giảm giá" }, { value: "other", label: "Khác" }] }, { name: "price", label: "Giá combo", type: "number" }, { name: "highlight_1", label: "Quyền lợi / điểm nổi bật 1", group: "details" }, { name: "highlight_2", label: "Quyền lợi / điểm nổi bật 2", group: "details" }, { name: "highlight_3", label: "Quyền lợi / điểm nổi bật 3", group: "details" }, { name: "highlight_4", label: "Quyền lợi / điểm nổi bật 4", group: "details" }, { name: "highlight_5", label: "Quyền lợi / điểm nổi bật 5", group: "details" }, { name: "promotion_tiers", label: "Bảng mốc nạp", type: "promotion-tiers", group: "details" }, { name: "note", label: "Ghi chú / điều kiện", type: "textarea", group: "details" }, { name: "branch_scope", label: "Cơ sở áp dụng", group: "details" }, { name: "image_url", label: "Ảnh khuyến mãi", type: "image", group: "media" }, { name: "valid_from", label: "Bắt đầu", type: "date", group: "status" }, { name: "valid_until", label: "Kết thúc", type: "date", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
 const tournamentFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên giải", required: true }, { name: "game", label: "Game", type: "select", options: ["FC Online", "Valorant", "TFT", "AOE"] }, { name: "status", label: "Trạng thái", type: "select", options: ["upcoming", "registration_open", "ongoing", "completed"] }, { name: "description", label: "Lead / mô tả ngắn", type: "textarea", group: "details" }, { name: "rules", label: "Thể lệ", type: "textarea", group: "details" }, { name: "held_on", label: "Ngày tổ chức", type: "date" }, { name: "starts_at", label: "Bắt đầu", type: "datetime-local" }, { name: "ends_at", label: "Kết thúc", type: "datetime-local" }, { name: "branch_name", label: "Cơ sở" }, { name: "entry_fee", label: "Lệ phí", type: "number" }, { name: "registration_url", label: "URL đăng ký", type: "url" }, { name: "registration_open", label: "Mở đăng ký", type: "checkbox", group: "status" }, { name: "show_in_hall_of_fame", label: "Hiển thị trong Vinh danh nhà vô địch", type: "checkbox", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "top_1", label: "Top 1", group: "details" }, { name: "top_2", label: "Top 2", group: "details" }, { name: "top_3", label: "Top 3", group: "details" }, { name: "summary_title", label: "Tiêu đề tổng kết", group: "details" }, { name: "summary_content", label: "Nội dung tổng kết", type: "textarea", group: "details" }, { name: "highlight_1", label: "Khoảnh khắc nổi bật 1", group: "details" }, { name: "highlight_2", label: "Khoảnh khắc nổi bật 2", group: "details" }, { name: "highlight_3", label: "Khoảnh khắc nổi bật 3", group: "details" }, { name: "highlight_4", label: "Khoảnh khắc nổi bật 4", group: "details" }, { name: "highlight_5", label: "Khoảnh khắc nổi bật 5", group: "details" }, { name: "facebook_post_url", label: "URL bài Facebook", type: "url", group: "details" }, { name: "image_url", label: "Ảnh giải đấu", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video / recap", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, ...commonFields];
 const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rút gọn", required: true }, { name: "tier", label: "Hạng", type: "select", options: ["Diamond", "Platinum", "Gold"] }, { name: "period_label", label: "Tháng vinh danh" }, { name: "image_url", label: "Ảnh hội viên", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "consent_confirmed", label: "Khách đã đồng ý công khai", type: "checkbox", group: "status" }, ...commonFields];
 const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea", group: "details" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
@@ -52,6 +52,7 @@ const errorMessages: Record<string, string> = {
   "invalid-facebook-post-url": "URL bài Facebook phải bắt đầu bằng http:// hoặc https://.",
   "registration-url-required": "Giải mở đăng ký bắt buộc có URL đăng ký.",
   "member-consent-required": "Không thể công khai hội viên khi chưa xác nhận đồng ý.",
+  "invalid-promotion-tier": "Mốc nạp phải có mức nạp > 0, khách nhận > 0 và khách nhận không nhỏ hơn mức nạp.",
 };
 
 function statusOf(record: Row, resource?: string) {
@@ -63,11 +64,16 @@ function statusOf(record: Row, resource?: string) {
   return "draft";
 }
 
-function normalizeRecords(resource: string, records: Row[]) {
+function normalizeRecords(resource: string, records: Row[], promotionTiers: Row[] = []) {
   if (resource === "promotions") {
     return records.map((record) => {
       const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
-      return { ...record, highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
+      const tiers = promotionTiers.filter((tier) => tier.promotion_id === record.id).sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)).slice(0, 8);
+      const tierFields = Object.fromEntries(tiers.flatMap((tier, index) => {
+        const row = index + 1;
+        return [[`tier_${row}_pay_amount`, tier.pay_amount ?? ""], [`tier_${row}_receive_amount`, tier.receive_amount ?? ""], [`tier_${row}_bonus_amount`, tier.bonus_amount ?? ""], [`tier_${row}_note`, tier.note ?? ""], [`tier_${row}_sort_order`, tier.sort_order ?? index]];
+      }));
+      return { ...record, promotion_type: record.promotion_type ?? "combo", ...tierFields, highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
     });
   }
   if (resource === "tournaments") {
@@ -106,6 +112,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers"] as const;
   const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
   const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
+  const { data: promotionTiers } = await supabase.from("promotion_tiers").select("*").order("sort_order");
   const loadError = results.find((result) => result.error)?.error?.message;
   const visibleError = params.error ? errorMessages[params.error] ?? params.error : undefined;
   const successMessage = params.status === "saved" ? "Đã lưu thay đổi." : params.status === "deleted" ? "Đã xóa nội dung." : params.status === "uploaded" ? "Đã upload ảnh website." : null;
@@ -115,7 +122,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const moduleHref = `/admin/dashboard?module=${activeModule}${q ? `&q=${encodeURIComponent(q)}` : ""}${filter !== "all" ? `&filter=${filter}` : ""}`;
   const returnTo = moduleHref;
 
-  const records = resource ? filterRecords(normalizeRecords(resource, data[resource as keyof typeof data] ?? []), resource, q, filter) : [];
+  const records = resource ? filterRecords(normalizeRecords(resource, data[resource as keyof typeof data] ?? [], (promotionTiers ?? []) as Row[]), resource, q, filter) : [];
 
   return (
     <main className="min-h-screen bg-black px-4 py-6 text-white sm:px-6">
@@ -192,7 +199,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   moduleHref={moduleHref}
                   returnTo={returnTo}
                   selectedId={selectedEdit}
-                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Không nhập JSON. Nhập từng điểm nổi bật vào các ô riêng, hệ thống tự lưu thành danh sách." : undefined}
+                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Chọn đúng loại chương trình. Combo dùng Giá combo + Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp, không nhập JSON và không dùng nhãn Giá." : undefined}
                 />
               </>
             ) : null}

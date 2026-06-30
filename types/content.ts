@@ -65,7 +65,8 @@ export interface PricingPlan {
 export interface Promotion {
   id: string;
   name: string;
-  price: number;
+  promotionType: "combo" | "topup_bonus" | "gift" | "event" | "discount" | "other";
+  price: number | null;
   highlights: string[];
   note: string;
   featured: boolean;
@@ -73,6 +74,15 @@ export interface Promotion {
   branchScope: string | null;
   validFrom: string | null;
   validUntil: string | null;
+  tiers: PromotionTier[];
+}
+
+export interface PromotionTier {
+  payAmount: number;
+  receiveAmount: number;
+  bonusAmount: number;
+  note: string | null;
+  sortOrder: number;
 }
 
 export interface Tournament {

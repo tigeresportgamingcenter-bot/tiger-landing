@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
-import type { Branch, ChampionPlacement, ContentImage, ContentVideo, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
+import type { Branch, ChampionPlacement, ContentImage, ContentVideo, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
 
 export interface SupabaseContent {
   branches?: Branch[];
@@ -27,6 +27,7 @@ const communityGameDescriptions: Record<SupportedGame, string> = {
 const memberTiers: MemberTier[] = ["Diamond", "Platinum", "Gold"];
 const tournamentStatuses: TournamentStatus[] = ["upcoming", "registration_open", "ongoing", "completed"];
 const mediaProviders: MediaProvider[] = ["upload", "youtube", "facebook", "external"];
+const promotionTypes: Promotion["promotionType"][] = ["combo", "topup_bonus", "gift", "event", "discount", "other"];
 
 function todayInVietnam() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -74,12 +75,15 @@ function safeVideo(src: unknown, provider: unknown, posterUrl: unknown, alt: str
   return { src: url, provider: provider as MediaProvider, poster: safeImage(posterUrl, alt) };
 }
 
-function mapPromotion(row: Record<string, unknown>): Promotion | null {
+function mapPromotion(row: Record<string, unknown>, tiersByPromotionId: Map<string, PromotionTier[]> = new Map()): Promotion | null {
   if (typeof row.slug !== "string" || typeof row.name !== "string") return null;
+  const promotionId = typeof row.id === "string" ? row.id : "";
+  const promotionType = promotionTypes.includes(row.promotion_type as Promotion["promotionType"]) ? row.promotion_type as Promotion["promotionType"] : "combo";
   return {
     id: row.slug,
     name: row.name,
-    price: typeof row.price === "number" ? row.price : Number(row.price ?? 0),
+    promotionType,
+    price: row.price === null || row.price === undefined || row.price === "" ? null : Number(row.price),
     highlights: safeTextList(row.highlights, 5),
     note: typeof row.note === "string" ? row.note : "",
     featured: Boolean(row.featured),
@@ -87,6 +91,20 @@ function mapPromotion(row: Record<string, unknown>): Promotion | null {
     branchScope: typeof row.branch_scope === "string" && row.branch_scope.trim() ? row.branch_scope : null,
     validFrom: typeof row.valid_from === "string" ? row.valid_from : null,
     validUntil: typeof row.valid_until === "string" ? row.valid_until : null,
+    tiers: tiersByPromotionId.get(promotionId) ?? [],
+  };
+}
+
+function mapPromotionTier(row: Record<string, unknown>): PromotionTier | null {
+  const payAmount = Number(row.pay_amount ?? 0);
+  const receiveAmount = Number(row.receive_amount ?? 0);
+  if (payAmount <= 0 || receiveAmount <= 0) return null;
+  return {
+    payAmount,
+    receiveAmount,
+    bonusAmount: Number(row.bonus_amount ?? Math.max(receiveAmount - payAmount, 0)),
+    note: typeof row.note === "string" && row.note.trim() ? row.note : null,
+    sortOrder: Number(row.sort_order ?? 0),
   };
 }
 
@@ -151,12 +169,26 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     image: safeImage(row.image_url, row.image_alt || `Không gian tại ${row.name}`),
   }));
 
-  const promotions = (activePromotionResult.error ? [] : activePromotionResult.data ?? []).flatMap((row) => {
-    const promotion = mapPromotion(row);
+  const promotionRows = activePromotionResult.error ? [] : activePromotionResult.data ?? [];
+  const upcomingPromotionRows = upcomingPromotionResult.error ? [] : upcomingPromotionResult.data ?? [];
+  const promotionIds = [...promotionRows, ...upcomingPromotionRows].flatMap((row) => typeof row.id === "string" ? [row.id] : []);
+  const tiersByPromotionId = new Map<string, PromotionTier[]>();
+  if (promotionIds.length) {
+    const { data: tierRows } = await supabase.from("promotion_tiers").select("*").in("promotion_id", promotionIds).order("sort_order");
+    for (const row of tierRows ?? []) {
+      if (typeof row.promotion_id !== "string") continue;
+      const tier = mapPromotionTier(row);
+      if (!tier) continue;
+      tiersByPromotionId.set(row.promotion_id, [...(tiersByPromotionId.get(row.promotion_id) ?? []), tier]);
+    }
+  }
+
+  const promotions = promotionRows.flatMap((row) => {
+    const promotion = mapPromotion(row, tiersByPromotionId);
     return promotion ? [promotion] : [];
   });
-  const upcomingPromotions = (upcomingPromotionResult.error ? [] : upcomingPromotionResult.data ?? []).flatMap((row) => {
-    const promotion = mapPromotion(row);
+  const upcomingPromotions = upcomingPromotionRows.flatMap((row) => {
+    const promotion = mapPromotion(row, tiersByPromotionId);
     return promotion ? [promotion] : [];
   });
 

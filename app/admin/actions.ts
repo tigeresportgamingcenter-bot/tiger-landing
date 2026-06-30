@@ -57,6 +57,31 @@ function repeatedText(formData: FormData, prefix: string, count: number) {
   return Array.from({ length: count }, (_, index) => text(formData, `${prefix}_${index + 1}`)).filter((item): item is string => Boolean(item));
 }
 
+function promotionType(formData: FormData) {
+  const value = text(formData, "promotion_type");
+  return value === "topup_bonus" || value === "gift" || value === "event" || value === "discount" || value === "other" ? value : "combo";
+}
+
+function numberOrNull(formData: FormData, name: string) {
+  const value = text(formData, name);
+  return value ? Number(value) : null;
+}
+
+function promotionTierPayload(formData: FormData) {
+  return Array.from({ length: 8 }, (_, index) => {
+    const row = index + 1;
+    const payAmount = numberOrNull(formData, `tier_${row}_pay_amount`);
+    const receiveAmount = numberOrNull(formData, `tier_${row}_receive_amount`);
+    const enteredBonusAmount = numberOrNull(formData, `tier_${row}_bonus_amount`);
+    const note = text(formData, `tier_${row}_note`);
+    const sortOrder = Number(text(formData, `tier_${row}_sort_order`) ?? index);
+    if (!payAmount && !receiveAmount && !enteredBonusAmount && !note) return null;
+    if (!payAmount || payAmount <= 0 || !receiveAmount || receiveAmount <= 0 || receiveAmount < payAmount) throw new Error("invalid-promotion-tier");
+    const bonusAmount = enteredBonusAmount !== null ? enteredBonusAmount : receiveAmount - payAmount;
+    return { pay_amount: payAmount, receive_amount: receiveAmount, bonus_amount: bonusAmount, note, sort_order: sortOrder };
+  }).filter((item): item is { pay_amount: number; receive_amount: number; bonus_amount: number; note: string | null; sort_order: number } => Boolean(item));
+}
+
 function dashboardReturn(formData: FormData, status: "saved" | "deleted" | "uploaded", error?: string) {
   const returnTo = text(formData, "return_to") ?? "/admin/dashboard";
   const separator = returnTo.includes("?") ? "&" : "?";
@@ -125,7 +150,10 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
   validateCommon(formData);
   const common = { published: checked(formData, "published"), verified: checked(formData, "verified") };
   if (resource === "branches") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), area: text(formData, "area"), address: text(formData, "address"), map_url: text(formData, "map_url"), phone: text(formData, "phone"), opening_hours: text(formData, "opening_hours"), status: text(formData, "status") ?? "unverified", description: text(formData, "description") ?? "", image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), sort_order: Number(text(formData, "sort_order") ?? 0) };
-  if (resource === "promotions") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), price: Number(text(formData, "price") ?? 0), highlights: repeatedText(formData, "highlight", 5), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), branch_scope: text(formData, "branch_scope"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
+  if (resource === "promotions") {
+    const type = promotionType(formData);
+    return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), promotion_type: type, price: type === "topup_bonus" ? null : Number(text(formData, "price") ?? 0), highlights: repeatedText(formData, "highlight", 5), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), branch_scope: text(formData, "branch_scope"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
+  }
   if (resource === "tournaments") {
     const registrationUrl = text(formData, "registration_url");
     const registrationOpen = checked(formData, "registration_open");
@@ -158,13 +186,37 @@ export async function saveContent(formData: FormData) {
   const id = text(formData, "id");
   let uploadedMedia: Array<{ bucket: string; objectPath: string }> = [];
   let payload: Record<string, unknown>;
+  let promotionTiers: ReturnType<typeof promotionTierPayload> = [];
   try {
     uploadedMedia = await uploadResourceMedia(supabase, resource, formData);
     payload = buildPayload(resource, formData);
+    promotionTiers = resource === "promotions" && promotionType(formData) === "topup_bonus" ? promotionTierPayload(formData) : [];
   } catch (error) {
     await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
     redirect(dashboardReturn(formData, "saved", error instanceof Error ? error.message : "validation"));
   }
+  if (resource === "promotions") {
+    const { data, error } = id
+      ? await supabase.from(resource).update(payload).eq("id", id).select("id").single()
+      : await supabase.from(resource).insert(payload).select("id").single();
+    if (error) {
+      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
+      redirect(dashboardReturn(formData, "saved", error.message));
+    }
+    const promotionId = data?.id ?? id;
+    if (promotionId) {
+      const { error: deleteTierError } = await supabase.from("promotion_tiers").delete().eq("promotion_id", promotionId);
+      if (deleteTierError) redirect(dashboardReturn(formData, "saved", deleteTierError.message));
+      if (promotionTiers.length) {
+        const { error: tierError } = await supabase.from("promotion_tiers").insert(promotionTiers.map((tier) => ({ ...tier, promotion_id: promotionId })));
+        if (tierError) redirect(dashboardReturn(formData, "saved", tierError.message));
+      }
+    }
+    revalidatePath("/");
+    revalidatePath("/admin/dashboard");
+    redirect(dashboardReturn(formData, "saved"));
+  }
+
   const query = id ? supabase.from(resource).update(payload).eq("id", id) : supabase.from(resource).insert(payload);
   const { error } = await query;
   if (error) {

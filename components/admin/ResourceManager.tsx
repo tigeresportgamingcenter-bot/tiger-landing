@@ -6,9 +6,9 @@ import { MediaUploadField } from "./MediaUploadField";
 export interface AdminField {
   name: string;
   label: string;
-  type?: "text" | "number" | "date" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video";
+  type?: "text" | "number" | "date" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video" | "promotion-tiers";
   required?: boolean;
-  options?: string[];
+  options?: Array<string | { label: string; value: string }>;
   group?: "main" | "media" | "status" | "details";
 }
 
@@ -61,9 +61,42 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
     return <MediaUploadField name={field.name} label={field.label} kind="video" resource={resource} currentUrl={typeof value === "string" ? value : ""} required={field.required} />;
   }
 
+  if (field.type === "promotion-tiers") {
+    return (
+      <div data-admin-field={field.name} className="md:col-span-2">
+        <p className="text-xs font-bold text-zinc-400">{field.label}</p>
+        <p className="mt-1 text-xs text-zinc-600">Dùng cho loại “Ưu đãi nạp tiền”. Bỏ trống toàn bộ dòng nếu chưa dùng.</p>
+        <div className="mt-3 space-y-3">
+          {Array.from({ length: 8 }, (_, index) => {
+            const row = index + 1;
+            return (
+              <div key={row} className="grid gap-2 rounded-xl border border-white/10 bg-black/25 p-3 md:grid-cols-[1fr_1fr_1fr_1.4fr_0.7fr]">
+                <label className="text-[11px] text-zinc-500">Mức nạp
+                  <input name={`tier_${row}_pay_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_pay_amount`] ?? "")} className={`${className} mt-1`} />
+                </label>
+                <label className="text-[11px] text-zinc-500">Khách nhận
+                  <input name={`tier_${row}_receive_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_receive_amount`] ?? "")} className={`${className} mt-1`} />
+                </label>
+                <label className="text-[11px] text-zinc-500">Tặng thêm
+                  <input name={`tier_${row}_bonus_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_bonus_amount`] ?? "")} className={`${className} mt-1`} />
+                </label>
+                <label className="text-[11px] text-zinc-500">Ghi chú
+                  <input name={`tier_${row}_note`} defaultValue={String(record?.[`tier_${row}_note`] ?? "")} className={`${className} mt-1`} />
+                </label>
+                <label className="text-[11px] text-zinc-500">Thứ tự
+                  <input name={`tier_${row}_sort_order`} type="number" defaultValue={String(record?.[`tier_${row}_sort_order`] ?? index)} className={`${className} mt-1`} />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   if (field.type === "checkbox") {
     return (
-      <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-300">
+      <label data-admin-field={field.name} className="flex min-h-11 items-center gap-2 text-sm text-zinc-300">
         <input type="checkbox" name={field.name} defaultChecked={Boolean(value)} className="size-4 accent-orange-500" />
         {field.label}
       </label>
@@ -72,7 +105,7 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   if (field.type === "textarea") {
     return (
-      <label className="text-xs text-zinc-500 md:col-span-2">
+      <label data-admin-field={field.name} className="text-xs text-zinc-500 md:col-span-2">
         {field.label}
         <textarea name={field.name} defaultValue={typeof value === "string" ? value : ""} required={field.required} rows={3} className={`${className} mt-1 py-2`} />
       </label>
@@ -81,10 +114,14 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   if (field.type === "select") {
     return (
-      <label className="text-xs text-zinc-500">
+      <label data-admin-field={field.name} className="text-xs text-zinc-500">
         {field.label}
-        <select name={field.name} defaultValue={String(value ?? field.options?.[0] ?? "")} className={`${className} mt-1`}>
-          {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
+        <select name={field.name} defaultValue={String(value ?? (typeof field.options?.[0] === "string" ? field.options[0] : field.options?.[0]?.value) ?? "")} className={`${className} mt-1`}>
+          {field.options?.map((option) => {
+            const value = typeof option === "string" ? option : option.value;
+            const label = typeof option === "string" ? option : option.label;
+            return <option key={value} value={value}>{label}</option>;
+          })}
         </select>
       </label>
     );
@@ -92,7 +129,7 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   const inputValue = field.type === "datetime-local" && typeof value === "string" ? value.slice(0, 16) : String(value ?? "");
   return (
-    <label className="text-xs text-zinc-500">
+    <label data-admin-field={field.name} className="text-xs text-zinc-500">
       {field.label}
       <input name={field.name} type={field.type ?? "text"} defaultValue={inputValue} required={field.required} className={`${className} mt-1`} />
     </label>
@@ -125,6 +162,26 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
           </details>
         );
       })}
+      {resource === "promotions" ? (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+              const form = document.currentScript?.closest("form");
+              if (!form) return;
+              const type = form.querySelector('[name="promotion_type"]');
+              const price = form.querySelector('[data-admin-field="price"]');
+              const tiers = form.querySelector('[data-admin-field="promotion_tiers"]');
+              const sync = () => {
+                const isTopup = type?.value === "topup_bonus";
+                if (price) price.style.display = isTopup ? "none" : "";
+                if (tiers) tiers.style.display = isTopup ? "" : "none";
+              };
+              type?.addEventListener("change", sync);
+              sync();
+            })();`,
+          }}
+        />
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <button className="min-h-11 rounded-lg bg-gradient-to-r from-tiger-red to-tiger-orange px-5 text-sm font-bold text-white">{record ? "Lưu thay đổi" : "Tạo mới"}</button>
         <Link href={returnTo} className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 text-sm font-bold text-white">Hủy</Link>

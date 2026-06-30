@@ -18,6 +18,7 @@ export type {
   PcTier,
   PricingPlan,
   Promotion,
+  PromotionTier,
   SiteContent,
   SiteSettings,
   SocialLinks,
