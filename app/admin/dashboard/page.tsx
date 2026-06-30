@@ -53,6 +53,7 @@ const errorMessages: Record<string, string> = {
   "registration-url-required": "Giải mở đăng ký bắt buộc có URL đăng ký.",
   "member-consent-required": "Không thể công khai hội viên khi chưa xác nhận đồng ý.",
   "invalid-promotion-tier": "Mốc nạp phải có mức nạp > 0, khách nhận > 0 và khách nhận không nhỏ hơn mức nạp.",
+  "invalid-combo-price": "Combo giờ chơi cần nhập Giá combo lớn hơn 0.",
 };
 
 function statusOf(record: Row, resource?: string) {

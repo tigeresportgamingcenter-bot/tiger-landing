@@ -152,7 +152,9 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
   if (resource === "branches") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), area: text(formData, "area"), address: text(formData, "address"), map_url: text(formData, "map_url"), phone: text(formData, "phone"), opening_hours: text(formData, "opening_hours"), status: text(formData, "status") ?? "unverified", description: text(formData, "description") ?? "", image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), sort_order: Number(text(formData, "sort_order") ?? 0) };
   if (resource === "promotions") {
     const type = promotionType(formData);
-    return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), promotion_type: type, price: type === "topup_bonus" ? null : Number(text(formData, "price") ?? 0), highlights: repeatedText(formData, "highlight", 5), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), branch_scope: text(formData, "branch_scope"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
+    const price = Number(text(formData, "price") ?? 0);
+    if (type === "combo" && price <= 0) throw new Error("invalid-combo-price");
+    return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), promotion_type: type, price: type === "topup_bonus" ? null : price, highlights: repeatedText(formData, "highlight", 5), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), branch_scope: text(formData, "branch_scope"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
   }
   if (resource === "tournaments") {
     const registrationUrl = text(formData, "registration_url");
