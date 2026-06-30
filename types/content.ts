@@ -70,6 +70,9 @@ export interface Promotion {
   note: string;
   featured: boolean;
   image: ContentImage | null;
+  branchScope: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
 }
 
 export interface Tournament {
@@ -197,6 +200,7 @@ export interface SiteContent {
   pcTiers: PcTier[];
   pricing: PricingPlan[];
   promotions: Promotion[];
+  upcomingPromotions: Promotion[];
   tournaments: Tournament[];
   socialLinks: SocialLinks;
   siteSettings: SiteSettings;

@@ -53,6 +53,16 @@ function checked(formData: FormData, name: string) {
   return formData.get(name) === "on";
 }
 
+function repeatedText(formData: FormData, prefix: string, count: number) {
+  return Array.from({ length: count }, (_, index) => text(formData, `${prefix}_${index + 1}`)).filter((item): item is string => Boolean(item));
+}
+
+function dashboardReturn(formData: FormData, status: "saved" | "deleted" | "uploaded", error?: string) {
+  const returnTo = text(formData, "return_to") ?? "/admin/dashboard";
+  const separator = returnTo.includes("?") ? "&" : "?";
+  return `${returnTo}${separator}${error ? `error=${encodeURIComponent(error)}` : `status=${status}`}`;
+}
+
 function isValidWebUrl(value: string) {
   try { const url = new URL(value); return url.protocol === "https:" || url.protocol === "http:"; } catch { return false; }
 }
@@ -115,7 +125,7 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
   validateCommon(formData);
   const common = { published: checked(formData, "published"), verified: checked(formData, "verified") };
   if (resource === "branches") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), area: text(formData, "area"), address: text(formData, "address"), map_url: text(formData, "map_url"), phone: text(formData, "phone"), opening_hours: text(formData, "opening_hours"), status: text(formData, "status") ?? "unverified", description: text(formData, "description") ?? "", image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), sort_order: Number(text(formData, "sort_order") ?? 0) };
-  if (resource === "promotions") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), price: Number(text(formData, "price") ?? 0), highlights: (text(formData, "highlights") ?? "").split("\n").map((item) => item.trim()).filter(Boolean), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
+  if (resource === "promotions") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), price: Number(text(formData, "price") ?? 0), highlights: repeatedText(formData, "highlight", 5), note: text(formData, "note") ?? "", image_url: text(formData, "image_url"), branch_scope: text(formData, "branch_scope"), valid_from: text(formData, "valid_from"), valid_until: text(formData, "valid_until"), featured: checked(formData, "featured") };
   if (resource === "tournaments") {
     const registrationUrl = text(formData, "registration_url");
     const registrationOpen = checked(formData, "registration_open");
@@ -124,7 +134,7 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
     const facebookPostUrl = text(formData, "facebook_post_url");
     if (facebookPostUrl && !isValidWebUrl(facebookPostUrl)) throw new Error("invalid-facebook-post-url");
     const placements = [1, 2, 3].flatMap((position) => { const displayName = text(formData, `top_${position}`); return displayName ? [{ position, displayName }] : []; });
-    const highlights = [1, 2, 3].flatMap((index) => { const highlight = text(formData, `highlight_${index}`); return highlight ? [highlight] : []; });
+    const highlights = repeatedText(formData, "highlight", 5);
     return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), game: text(formData, "game"), description: text(formData, "description") ?? "", held_on: text(formData, "held_on"), starts_at: text(formData, "starts_at"), ends_at: text(formData, "ends_at"), branch_name: text(formData, "branch_name"), placements, image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), status: registrationOpen ? "registration_open" : text(formData, "status") ?? "upcoming", registration_url: registrationUrl, registration_open: registrationOpen, entry_fee: text(formData, "entry_fee") ? Number(text(formData, "entry_fee")) : null, rules: text(formData, "rules"), show_in_hall_of_fame: checked(formData, "show_in_hall_of_fame"), summary_title: text(formData, "summary_title"), summary_content: text(formData, "summary_content"), highlights, facebook_post_url: facebookPostUrl };
   }
   if (resource === "hall_of_fame_members") {
@@ -153,16 +163,17 @@ export async function saveContent(formData: FormData) {
     payload = buildPayload(resource, formData);
   } catch (error) {
     await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-    redirect(`/admin/dashboard?error=${error instanceof Error ? encodeURIComponent(error.message) : "validation"}`);
+    redirect(dashboardReturn(formData, "saved", error instanceof Error ? error.message : "validation"));
   }
   const query = id ? supabase.from(resource).update(payload).eq("id", id) : supabase.from(resource).insert(payload);
   const { error } = await query;
   if (error) {
     await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-    redirect(`/admin/dashboard?error=${encodeURIComponent(error.message)}`);
+    redirect(dashboardReturn(formData, "saved", error.message));
   }
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
+  redirect(dashboardReturn(formData, "saved"));
 }
 
 export async function deleteContent(formData: FormData) {
@@ -171,9 +182,10 @@ export async function deleteContent(formData: FormData) {
   if (!resource || !resources.includes(resource) || !id) return;
   const supabase = await requireAdmin();
   const { error } = await supabase.from(resource).delete().eq("id", id);
-  if (error) redirect(`/admin/dashboard?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(dashboardReturn(formData, "deleted", error.message));
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
+  redirect(dashboardReturn(formData, "deleted"));
 }
 
 export async function uploadImage(formData: FormData) {
@@ -183,21 +195,22 @@ export async function uploadImage(formData: FormData) {
   const altText = text(formData, "alt_text");
   const file = formData.get("file");
   if (!bucket || !buckets.includes(bucket as (typeof buckets)[number]) || !imageKey || !altText || !(file instanceof File)) return;
-  if (!allowedImageTypes.includes(file.type as (typeof allowedImageTypes)[number]) || file.size === 0 || file.size > 5 * 1024 * 1024) redirect("/admin/dashboard?error=invalid-image");
+  if (!allowedImageTypes.includes(file.type as (typeof allowedImageTypes)[number]) || file.size === 0 || file.size > 5 * 1024 * 1024) redirect(dashboardReturn(formData, "uploaded", "invalid-image"));
   const extension = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "webp";
   const objectPath = `${Date.now()}-${randomUUID()}.${extension}`;
   const { data: existingImage } = await supabase.from("site_images").select("bucket, object_path").eq("image_key", imageKey).maybeSingle();
   const { error: uploadError } = await supabase.storage.from(bucket).upload(objectPath, file, { contentType: file.type, upsert: false });
-  if (uploadError) redirect(`/admin/dashboard?error=${encodeURIComponent(uploadError.message)}`);
+  if (uploadError) redirect(dashboardReturn(formData, "uploaded", uploadError.message));
   const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(objectPath);
   const { error } = await supabase.from("site_images").upsert({ image_key: imageKey, bucket, object_path: objectPath, public_url: publicUrl.publicUrl, alt_text: altText, published: false, verified: false }, { onConflict: "image_key" });
   if (error) {
     await supabase.storage.from(bucket).remove([objectPath]);
-    redirect(`/admin/dashboard?error=${encodeURIComponent(error.message)}`);
+    redirect(dashboardReturn(formData, "uploaded", error.message));
   }
   if (existingImage?.bucket && existingImage.object_path && (existingImage.bucket !== bucket || existingImage.object_path !== objectPath)) {
     await supabase.storage.from(existingImage.bucket).remove([existingImage.object_path]);
   }
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
+  redirect(dashboardReturn(formData, "uploaded"));
 }

@@ -1,105 +1,90 @@
-# Checklist kích hoạt Phase 2A — Tiger Esports Admin CMS
+# Checklist kích hoạt Tiger Esports Admin CMS
 
-Checklist này chỉ dùng Publishable key. Không nhập, lưu hoặc triển khai `service_role` key trong project.
+Checklist này chỉ dùng Supabase Publishable key. Không nhập, lưu hoặc triển khai `service_role` key trong source code, Vercel hay trình duyệt.
 
-## A. Chuẩn bị Supabase
+## 1. Migration Supabase
 
-- [ ] Đăng nhập tài khoản chủ sở hữu tại [Supabase Dashboard](https://supabase.com/dashboard).
-- [ ] Tạo project production, chọn region phù hợp và lưu database password ở password manager.
-- [ ] Mở **SQL Editor** và chạy toàn bộ `supabase/migrations/20260628_phase2a.sql`.
-- [ ] Chạy tiếp `supabase/migrations/20260628_phase2a_hardening.sql`.
-- [ ] Chạy tiếp `supabase/migrations/20260629_phase2b_tournaments_and_pc_tiers.sql`.
-- [ ] Xác nhận Table Editor có: `admin_users`, `branches`, `promotions`, `tournaments`, `hall_of_fame_members`, `site_images`, `gallery_items`, `pc_tiers`.
-- [ ] Xác nhận Storage có: `hero`, `branches`, `community`, `hall-of-fame`, `members`.
-- [ ] Xác nhận RLS đang bật trên tất cả bảng public.
+Chạy lần lượt trong Supabase SQL Editor:
 
-Kiểm tra nhanh trong SQL Editor:
+1. `supabase/migrations/20260628_phase2a.sql`
+2. `supabase/migrations/20260628_phase2a_hardening.sql`
+3. `supabase/migrations/20260629_phase2b_tournaments_and_pc_tiers.sql`
+4. `supabase/migrations/20260629_phase2b_media_video.sql`
+5. `supabase/migrations/20260629_phase2b_tournament_operations.sql`
+6. `supabase/migrations/20260630_phase2b_admin_ux_media_tournaments_promotions.sql`
 
-```sql
-select schemaname, tablename, rowsecurity
-from pg_tables
-where schemaname = 'public'
-order by tablename;
+Sau khi chạy xong, kiểm tra có các bảng:
 
-select id, name, public
-from storage.buckets
-where id in ('hero','branches','community','hall-of-fame','members');
-```
+- `admin_users`
+- `branches`
+- `promotions`
+- `tournaments`
+- `hall_of_fame_members`
+- `site_images`
+- `gallery_items`
+- `pc_tiers`
 
-## B. Tạo tài khoản admin
+Storage bucket cần có:
 
-- [ ] Vào **Authentication → Users → Add user**.
-- [ ] Tạo user bằng email riêng của chủ quán và mật khẩu mạnh.
-- [ ] Sao chép UUID của user, không sao chép access token.
-- [ ] Chạy lệnh sau trong SQL Editor:
+- `hero`
+- `branches`
+- `community`
+- `hall-of-fame`
+- `members`
+- `videos`
+
+## 2. Admin user
+
+1. Vào Supabase → Authentication → Users → Add user.
+2. Tạo tài khoản admin bằng email của chủ quán.
+3. Copy UUID của user.
+4. Chạy:
 
 ```sql
 insert into public.admin_users (user_id)
 values ('UUID_CUA_USER');
 ```
 
-- [ ] Kiểm tra UID đã có trong `public.admin_users`.
+## 3. Vercel Environment Variables
 
-## C. Cấu hình local
-
-- [ ] Sao chép `.env.example` thành `.env.local`.
-- [ ] Điền Project URL và Publishable key từ **Project Settings → API**:
+Thêm cho Production và Preview:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=https://DOMAIN_PRODUCTION
 ```
 
-- [ ] Không thêm `service_role`, database password hoặc access token.
-- [ ] Chạy `npm run check:phase2b`.
-- [ ] Nếu máy có Git, chạy `git check-ignore .env.local`; kết quả phải trả về `.env.local`.
-- [ ] Chạy `git status --short` và xác nhận `.env.local` không xuất hiện.
-- [ ] Chạy `npm run dev`, mở `/admin/login` và đăng nhập.
+Không thêm `service_role` key.
 
-## D. Kiểm thử Admin CMS
+## 4. Quy tắc nhập nội dung Admin
 
-- [ ] Tạo một cơ sở ở trạng thái draft; xác nhận landing chưa hiển thị.
-- [ ] Bật `verified` nhưng chưa bật `published`; xác nhận landing chưa hiển thị.
-- [ ] Bật cả `verified` và `published`; xác nhận landing hiển thị sau tối đa 60 giây.
-- [ ] Upload một ảnh WebP/JPEG/PNG dưới 5MB.
-- [ ] Kiểm tra ảnh mới xuất hiện trong **Ảnh website** ở trạng thái draft.
-- [ ] Bật verified và published cho ảnh thử.
-- [ ] Dùng khóa `hero-main` để thử ảnh hero hoặc `community-tournament` cho ảnh cộng đồng.
-- [ ] Tạo một hội viên chưa consent; xác nhận landing không hiển thị.
-- [ ] Tạo giải có `registration_open`, URL đăng ký và kiểm tra hai CTA ngoài landing.
-- [ ] Nhập Top 1/2/3 bằng ba ô riêng và kiểm tra trang chi tiết giải.
-- [ ] Tạo một hạng máy draft, sau đó verified + published và kiểm tra fallback/hiển thị.
-- [ ] Chỉ bật consent sau khi có sự đồng ý thực tế của khách.
-- [ ] Thử sửa, bật/tắt và xóa một bản ghi thử; xác nhận hộp thoại trước khi xóa.
+- Không nhập JSON ở bất kỳ module vận hành nào.
+- Khuyến mãi: nhập Điểm nổi bật 1–5, hệ thống tự lưu thành `highlights`.
+- Giải đấu: nhập Top 1/2/3 bằng ba ô riêng, hệ thống tự lưu thành `placements`.
+- Tổng kết giải đấu: nhập Khoảnh khắc nổi bật 1–5, hệ thống tự lưu thành `highlights`.
+- Hội viên chỉ bật public khi `consent_confirmed = true`.
+- Nội dung public chỉ hiển thị khi `published = true` và `verified = true`.
 
-## E. Cấu hình Vercel
+## 5. Kiểm thử production
 
-- [ ] Vào **Project → Settings → Environment Variables**.
-- [ ] Thêm `NEXT_PUBLIC_SUPABASE_URL` cho Preview và Production.
-- [ ] Thêm `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` cho Preview và Production.
-- [ ] Thêm `NEXT_PUBLIC_SITE_URL` bằng domain production chính xác.
-- [ ] Không thêm `service_role` key.
-- [ ] Redeploy từ commit đã kiểm tra.
-- [ ] Mở deployment logs và xác nhận build thành công.
+- Landing page trả HTTP 200.
+- `/admin/dashboard` yêu cầu đăng nhập.
+- Upload ảnh/video thành công.
+- Draft không xuất hiện ngoài public.
+- Published nhưng chưa verified không xuất hiện ngoài public.
+- Khuyến mãi hết hạn không xuất hiện ngoài landing chính.
+- Giải `completed` chỉ vào Hall of Fame nếu bật `show_in_hall_of_fame`.
 
-## F. Kiểm thử production
+## 6. Trước khi go-live
 
-- [ ] Landing page trả HTTP 200.
-- [ ] `/admin/dashboard` chuyển về `/admin/login` khi chưa đăng nhập.
-- [ ] Admin đăng nhập thành công.
-- [ ] Upload ảnh thử thành công.
-- [ ] Nội dung draft không xuất hiện public.
-- [ ] Nội dung published nhưng chưa verified không xuất hiện public.
-- [ ] Hội viên thiếu consent không xuất hiện public.
-- [ ] Tắt Supabase env trên một preview riêng và xác nhận landing fallback static, không crash.
-- [ ] Kiểm tra CTA Facebook, Zalo, hotline và Maps không thay đổi.
+Chạy:
 
-## G. Trước khi go-live
+```bash
+npm run lint
+npm run type-check
+npm run build
+npm audit
+```
 
-- [ ] Chạy `npm run lint`.
-- [ ] Chạy `npm run type-check`.
-- [ ] Chạy `npm run build`.
-- [ ] Chạy `npm audit`.
-- [ ] Chỉ nhập dữ liệu thật đã xác minh.
-- [ ] Xóa bản ghi thử, nhưng không xóa dữ liệu production ngoài phạm vi kiểm thử.
+Chỉ nhập dữ liệu thật đã xác minh. Không xóa dữ liệu production nếu không chắc chắn.

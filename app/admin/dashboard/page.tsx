@@ -1,19 +1,42 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logout, uploadImage } from "@/app/admin/actions";
 import { ResourceManager, type AdminField } from "@/components/admin/ResourceManager";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox" }, { name: "verified", label: "Đã xác minh", type: "checkbox" }];
-const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea" }, { name: "image_url", label: "Ảnh cơ sở", type: "image" }, { name: "image_alt", label: "Alt ảnh" }, { name: "sort_order", label: "Thứ tự", type: "number" }, ...commonFields];
-const promotionFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên combo", required: true }, { name: "price", label: "Giá", type: "number", required: true }, { name: "highlights", label: "Điểm nổi bật (mỗi dòng một ý)", type: "textarea" }, { name: "note", label: "Ghi chú", type: "textarea" }, { name: "image_url", label: "Ảnh combo", type: "image" }, { name: "valid_from", label: "Bắt đầu", type: "date" }, { name: "valid_until", label: "Kết thúc", type: "date" }, { name: "featured", label: "Nổi bật", type: "checkbox" }, ...commonFields];
-const tournamentFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên giải", required: true }, { name: "game", label: "Game", type: "select", options: ["FC Online", "Valorant", "TFT", "AOE"] }, { name: "status", label: "Trạng thái", type: "select", options: ["upcoming", "registration_open", "ongoing", "completed"] }, { name: "description", label: "Mô tả giải đấu", type: "textarea" }, { name: "rules", label: "Thể lệ", type: "textarea" }, { name: "held_on", label: "Ngày tổ chức", type: "date" }, { name: "starts_at", label: "Bắt đầu", type: "datetime-local" }, { name: "ends_at", label: "Kết thúc", type: "datetime-local" }, { name: "branch_name", label: "Cơ sở" }, { name: "entry_fee", label: "Lệ phí", type: "number" }, { name: "registration_url", label: "URL đăng ký", type: "url" }, { name: "registration_open", label: "Mở đăng ký", type: "checkbox" }, { name: "show_in_hall_of_fame", label: "Hiển thị trong Vinh danh nhà vô địch", type: "checkbox" }, { name: "top_1", label: "Top 1" }, { name: "top_2", label: "Top 2" }, { name: "top_3", label: "Top 3" }, { name: "image_url", label: "Ảnh giải đấu", type: "image" }, { name: "image_alt", label: "Alt ảnh" }, { name: "video_url", label: "Video / recap", type: "video" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"] }, { name: "poster_url", label: "Ảnh poster video", type: "image" }, { name: "summary_title", label: "Tiêu đề tổng kết" }, { name: "summary_content", label: "Nội dung tổng kết", type: "textarea" }, { name: "highlight_1", label: "Điểm nhấn 1" }, { name: "highlight_2", label: "Điểm nhấn 2" }, { name: "highlight_3", label: "Điểm nhấn 3" }, { name: "facebook_post_url", label: "URL bài Facebook", type: "url" }, ...commonFields];
-const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rút gọn", required: true }, { name: "tier", label: "Hạng", type: "select", options: ["Diamond", "Platinum", "Gold"] }, { name: "period_label", label: "Tháng vinh danh" }, { name: "image_url", label: "Ảnh hội viên", type: "image" }, { name: "image_alt", label: "Alt ảnh" }, { name: "consent_confirmed", label: "Khách đã đồng ý công khai", type: "checkbox" }, ...commonFields];
-const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image" }, { name: "image_alt", label: "Alt ảnh" }, { name: "video_url", label: "Video", type: "video" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"] }, { name: "poster_url", label: "Ảnh poster video", type: "image" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number" }, ...commonFields];
-const siteImageFields: AdminField[] = [{ name: "image_key", label: "Khóa ảnh", required: true }, { name: "bucket", label: "Bucket", required: true }, { name: "object_path", label: "Đường dẫn object", required: true }, { name: "public_url", label: "URL công khai", required: true }, { name: "alt_text", label: "Alt ảnh", required: true }, ...commonFields];
-const pcTierFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên hạng máy", required: true }, { name: "subtitle", label: "Mô tả ngắn" }, { name: "cpu", label: "CPU", required: true }, { name: "gpu", label: "GPU", required: true }, { name: "ram", label: "RAM", required: true }, { name: "monitor", label: "Màn hình", required: true }, { name: "mainboard", label: "Mainboard" }, { name: "storage", label: "Ổ cứng" }, { name: "peripherals", label: "Thiết bị ngoại vi", type: "textarea" }, { name: "note", label: "Ghi chú", type: "textarea" }, { name: "branch_scope", label: "Phạm vi cơ sở" }, { name: "sort_order", label: "Thứ tự", type: "number" }, { name: "featured", label: "Nổi bật", type: "checkbox" }, ...commonFields];
-
 type Row = Record<string, unknown>;
+type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "pc_tiers" | "gallery";
+
+const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox", group: "status" }, { name: "verified", label: "Đã xác minh", type: "checkbox", group: "status" }];
+const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea", group: "details" }, { name: "image_url", label: "Ảnh cơ sở", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
+const promotionFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên chương trình", required: true }, { name: "price", label: "Giá / giá trị ưu đãi", type: "number", required: true }, { name: "highlight_1", label: "Điểm nổi bật 1", group: "details" }, { name: "highlight_2", label: "Điểm nổi bật 2", group: "details" }, { name: "highlight_3", label: "Điểm nổi bật 3", group: "details" }, { name: "highlight_4", label: "Điểm nổi bật 4", group: "details" }, { name: "highlight_5", label: "Điểm nổi bật 5", group: "details" }, { name: "note", label: "Ghi chú / điều kiện", type: "textarea", group: "details" }, { name: "branch_scope", label: "Cơ sở áp dụng", group: "details" }, { name: "image_url", label: "Ảnh khuyến mãi", type: "image", group: "media" }, { name: "valid_from", label: "Bắt đầu", type: "date", group: "status" }, { name: "valid_until", label: "Kết thúc", type: "date", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
+const tournamentFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên giải", required: true }, { name: "game", label: "Game", type: "select", options: ["FC Online", "Valorant", "TFT", "AOE"] }, { name: "status", label: "Trạng thái", type: "select", options: ["upcoming", "registration_open", "ongoing", "completed"] }, { name: "description", label: "Lead / mô tả ngắn", type: "textarea", group: "details" }, { name: "rules", label: "Thể lệ", type: "textarea", group: "details" }, { name: "held_on", label: "Ngày tổ chức", type: "date" }, { name: "starts_at", label: "Bắt đầu", type: "datetime-local" }, { name: "ends_at", label: "Kết thúc", type: "datetime-local" }, { name: "branch_name", label: "Cơ sở" }, { name: "entry_fee", label: "Lệ phí", type: "number" }, { name: "registration_url", label: "URL đăng ký", type: "url" }, { name: "registration_open", label: "Mở đăng ký", type: "checkbox", group: "status" }, { name: "show_in_hall_of_fame", label: "Hiển thị trong Vinh danh nhà vô địch", type: "checkbox", group: "status" }, { name: "top_1", label: "Top 1", group: "details" }, { name: "top_2", label: "Top 2", group: "details" }, { name: "top_3", label: "Top 3", group: "details" }, { name: "summary_title", label: "Tiêu đề tổng kết", group: "details" }, { name: "summary_content", label: "Nội dung tổng kết", type: "textarea", group: "details" }, { name: "highlight_1", label: "Khoảnh khắc nổi bật 1", group: "details" }, { name: "highlight_2", label: "Khoảnh khắc nổi bật 2", group: "details" }, { name: "highlight_3", label: "Khoảnh khắc nổi bật 3", group: "details" }, { name: "highlight_4", label: "Khoảnh khắc nổi bật 4", group: "details" }, { name: "highlight_5", label: "Khoảnh khắc nổi bật 5", group: "details" }, { name: "facebook_post_url", label: "URL bài Facebook", type: "url", group: "details" }, { name: "image_url", label: "Ảnh giải đấu", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video / recap", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, ...commonFields];
+const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rút gọn", required: true }, { name: "tier", label: "Hạng", type: "select", options: ["Diamond", "Platinum", "Gold"] }, { name: "period_label", label: "Tháng vinh danh" }, { name: "image_url", label: "Ảnh hội viên", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "consent_confirmed", label: "Khách đã đồng ý công khai", type: "checkbox", group: "status" }, ...commonFields];
+const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea", group: "details" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
+const siteImageFields: AdminField[] = [{ name: "image_key", label: "Khóa ảnh", required: true }, { name: "bucket", label: "Bucket", required: true }, { name: "object_path", label: "Đường dẫn object", required: true }, { name: "public_url", label: "URL công khai", required: true }, { name: "alt_text", label: "Alt ảnh", required: true }, ...commonFields];
+const pcTierFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên hạng máy", required: true }, { name: "subtitle", label: "Mô tả ngắn" }, { name: "cpu", label: "CPU", required: true }, { name: "gpu", label: "GPU", required: true }, { name: "ram", label: "RAM", required: true }, { name: "monitor", label: "Màn hình", required: true }, { name: "mainboard", label: "Mainboard", group: "details" }, { name: "storage", label: "Ổ cứng", group: "details" }, { name: "peripherals", label: "Thiết bị ngoại vi", type: "textarea", group: "details" }, { name: "note", label: "Ghi chú", type: "textarea", group: "details" }, { name: "branch_scope", label: "Phạm vi cơ sở", group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
+
+const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: string }> = [
+  { key: "overview", label: "Tổng quan", title: "Tổng quan" },
+  { key: "media", label: "Ảnh & Media", resource: "site_images", title: "Ảnh website" },
+  { key: "branches", label: "Cơ sở", resource: "branches", title: "Cơ sở" },
+  { key: "promotions", label: "Khuyến mãi", resource: "promotions", title: "Khuyến mãi" },
+  { key: "tournaments", label: "Giải đấu", resource: "tournaments", title: "Giải đấu" },
+  { key: "honors", label: "Vinh danh", resource: "hall_of_fame_members", title: "Hội viên vinh danh" },
+  { key: "pc_tiers", label: "Dàn máy / Cấu hình", resource: "pc_tiers", title: "Dàn máy / Cấu hình" },
+  { key: "gallery", label: "Gallery", resource: "gallery_items", title: "Gallery" },
+];
+
+const moduleFields: Record<string, AdminField[]> = {
+  branches: branchFields,
+  promotions: promotionFields,
+  tournaments: tournamentFields,
+  hall_of_fame_members: memberFields,
+  site_images: siteImageFields,
+  pc_tiers: pcTierFields,
+  gallery_items: galleryFields,
+};
 
 const errorMessages: Record<string, string> = {
   "invalid-image": "Ảnh phải là JPEG, PNG hoặc WebP và không vượt quá 5MB.",
@@ -31,8 +54,49 @@ const errorMessages: Record<string, string> = {
   "member-consent-required": "Không thể công khai hội viên khi chưa xác nhận đồng ý.",
 };
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+function statusOf(record: Row, resource?: string) {
+  if (resource === "tournaments" && record.registration_open) return "registration_open";
+  if (resource === "tournaments" && record.status === "completed") return "completed";
+  if (record.featured) return "featured";
+  if (record.published && record.verified) return "published";
+  if (record.verified) return "verified";
+  return "draft";
+}
+
+function normalizeRecords(resource: string, records: Row[]) {
+  if (resource === "promotions") {
+    return records.map((record) => {
+      const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
+      return { ...record, highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
+    });
+  }
+  if (resource === "tournaments") {
+    return records.map((record) => {
+      const placements = Array.isArray(record.placements) ? record.placements as Array<Record<string, unknown>> : [];
+      const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
+      return { ...record, top_1: placements.find((placement) => placement.position === 1)?.displayName ?? "", top_2: placements.find((placement) => placement.position === 2)?.displayName ?? "", top_3: placements.find((placement) => placement.position === 3)?.displayName ?? "", highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
+    });
+  }
+  return records;
+}
+
+function filterRecords(records: Row[], resource: string | undefined, q: string, status: string) {
+  return records.filter((record) => {
+    const haystack = [record.name, record.title, record.display_name, record.slug, record.image_key, record.id].map((item) => String(item ?? "").toLowerCase()).join(" ");
+    const matchesSearch = !q || haystack.includes(q.toLowerCase());
+    const matchesStatus = status === "all" || statusOf(record, resource) === status;
+    return matchesSearch && matchesStatus;
+  });
+}
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ module?: string; q?: string; filter?: string; edit?: string; error?: string; status?: string }> }) {
   if (!isSupabaseConfigured()) redirect("/admin/login?error=config");
+  const params = await searchParams;
+  const activeModule = modules.some((module) => module.key === params.module) ? params.module as ModuleKey : "overview";
+  const q = params.q ?? "";
+  const filter = params.filter ?? "all";
+  const selectedEdit = params.edit;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
@@ -42,44 +106,99 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers"] as const;
   const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
   const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
-  const tournamentRecords = data.tournaments.map((record) => {
-    const placements = Array.isArray(record.placements) ? record.placements as Array<Record<string, unknown>> : [];
-    const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
-    return { ...record, top_1: placements.find((placement) => placement.position === 1)?.displayName ?? "", top_2: placements.find((placement) => placement.position === 2)?.displayName ?? "", top_3: placements.find((placement) => placement.position === 3)?.displayName ?? "", highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "" };
-  });
-  const { error } = await searchParams;
   const loadError = results.find((result) => result.error)?.error?.message;
-  const visibleError = error ? errorMessages[error] ?? error : undefined;
+  const visibleError = params.error ? errorMessages[params.error] ?? params.error : undefined;
+  const successMessage = params.status === "saved" ? "Đã lưu thay đổi." : params.status === "deleted" ? "Đã xóa nội dung." : params.status === "uploaded" ? "Đã upload ảnh website." : null;
+
+  const currentModule = modules.find((module) => module.key === activeModule)!;
+  const resource = currentModule.resource;
+  const moduleHref = `/admin/dashboard?module=${activeModule}${q ? `&q=${encodeURIComponent(q)}` : ""}${filter !== "all" ? `&filter=${filter}` : ""}`;
+  const returnTo = moduleHref;
+
+  const records = resource ? filterRecords(normalizeRecords(resource, data[resource as keyof typeof data] ?? []), resource, q, filter) : [];
 
   return (
-    <main className="mx-auto max-w-6xl space-y-14 px-5 py-8 sm:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Tiger Esports</p>
-          <h1 className="mt-2 text-3xl font-extrabold">Dashboard nội dung</h1>
-          <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
+    <main className="min-h-screen bg-black px-4 py-6 text-white sm:px-6">
+      <div className="mx-auto max-w-7xl">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Tiger Esports CMS</p>
+            <h1 className="mt-2 text-3xl font-extrabold">Dashboard nội dung</h1>
+            <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
+          </div>
+          <form action={logout}><button className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-bold">Đăng xuất</button></form>
+        </header>
+
+        {visibleError || loadError ? <p className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</p> : null}
+        {successMessage ? <p className="mt-5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">{successMessage}</p> : null}
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 lg:sticky lg:top-4 lg:self-start">
+            <nav className="grid gap-1">
+              {modules.map((module) => (
+                <Link key={module.key} href={`/admin/dashboard?module=${module.key}`} className={`rounded-xl px-3 py-2 text-sm font-bold ${activeModule === module.key ? "bg-tiger-orange text-white" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}>
+                  {module.label}
+                </Link>
+              ))}
+            </nav>
+          </aside>
+
+          <section className="space-y-5">
+            {activeModule === "overview" ? (
+              <div className="grid gap-4 md:grid-cols-3">
+                {modules.filter((module) => module.resource).map((module) => {
+                  const count = data[module.resource as keyof typeof data]?.length ?? 0;
+                  return <Link key={module.key} href={`/admin/dashboard?module=${module.key}`} className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 hover:border-tiger-orange/50"><p className="text-sm text-zinc-500">{module.label}</p><p className="mt-3 text-3xl font-extrabold text-white">{count}</p></Link>;
+                })}
+              </div>
+            ) : null}
+
+            {activeModule === "media" ? (
+              <section className="rounded-2xl border border-tiger-orange/25 bg-tiger-orange/5 p-5">
+                <h2 className="text-2xl font-extrabold">Upload ảnh website</h2>
+                <p className="mt-2 text-sm text-zinc-500">Dùng cho hero/community/branch/member. Ảnh mới luôn ở trạng thái chưa xuất bản.</p>
+                <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
+                  <input type="hidden" name="return_to" value={returnTo} />
+                  <select name="bucket" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3"><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
+                  <input name="image_key" placeholder="Khóa ảnh, ví dụ hero-main" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
+                  <input name="alt_text" placeholder="Mô tả ảnh" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
+                  <input name="file" type="file" accept="image/jpeg,image/png,image/webp" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 p-2" />
+                  <button className="min-h-11 rounded-lg bg-tiger-orange font-bold md:col-span-2">Upload lên Storage</button>
+                </form>
+              </section>
+            ) : null}
+
+            {resource ? (
+              <>
+                <form className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:grid-cols-[1fr_180px_auto]">
+                  <input type="hidden" name="module" value={activeModule} />
+                  <input name="q" defaultValue={q} placeholder="Tìm theo tên, slug..." className="min-h-11 rounded-lg border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-tiger-orange" />
+                  <select name="filter" defaultValue={filter} className="min-h-11 rounded-lg border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-tiger-orange">
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="draft">Nháp</option>
+                    <option value="verified">Đã xác minh</option>
+                    <option value="published">Đang hiển thị</option>
+                    <option value="featured">Nổi bật</option>
+                    <option value="registration_open">Mở đăng ký</option>
+                    <option value="completed">Đã kết thúc</option>
+                  </select>
+                  <button className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-bold">Lọc</button>
+                </form>
+                <ResourceManager
+                  title={currentModule.title}
+                  resource={resource}
+                  fields={moduleFields[resource]}
+                  records={records}
+                  moduleHref={moduleHref}
+                  returnTo={returnTo}
+                  selectedId={selectedEdit}
+                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Không nhập JSON. Nhập từng điểm nổi bật vào các ô riêng, hệ thống tự lưu thành danh sách." : undefined}
+                />
+              </>
+            ) : null}
+          </section>
         </div>
-        <form action={logout}><button className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-bold">Đăng xuất</button></form>
-      </header>
-      {visibleError || loadError ? <p className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</p> : null}
-      <section className="rounded-2xl border border-tiger-orange/25 bg-tiger-orange/5 p-5">
-        <h2 className="text-2xl font-extrabold">Upload ảnh website</h2>
-        <p className="mt-2 text-sm text-zinc-500">JPEG, PNG hoặc WebP, tối đa 5MB. Ảnh mới luôn ở trạng thái chưa xuất bản.</p>
-        <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
-          <select name="bucket" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3"><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
-          <input name="image_key" placeholder="Khóa ảnh, ví dụ hero-main" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
-          <input name="alt_text" placeholder="Mô tả ảnh" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
-          <input name="file" type="file" accept="image/jpeg,image/png,image/webp" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 p-2" />
-          <button className="min-h-11 rounded-lg bg-tiger-orange font-bold md:col-span-2">Upload lên Storage</button>
-        </form>
-      </section>
-      <ResourceManager title="Cơ sở" resource="branches" fields={branchFields} records={data.branches} />
-      <ResourceManager title="Combo & khuyến mãi" resource="promotions" fields={promotionFields} records={data.promotions} />
-      <ResourceManager title="Dàn máy / Cấu hình" resource="pc_tiers" fields={pcTierFields} records={data.pc_tiers} />
-      <ResourceManager title="Giải đấu" resource="tournaments" fields={tournamentFields} records={tournamentRecords} note="Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Card Community chỉ dùng mô tả game ngắn 1–2 dòng, tối đa khoảng 120–160 ký tự." />
-      <ResourceManager title="Hội viên vinh danh" resource="hall_of_fame_members" fields={memberFields} records={data.hall_of_fame_members} />
-      <ResourceManager title="Ảnh website" resource="site_images" fields={siteImageFields} records={data.site_images} />
-      <ResourceManager title="Gallery" resource="gallery_items" fields={galleryFields} records={data.gallery_items} />
+      </div>
     </main>
   );
 }
