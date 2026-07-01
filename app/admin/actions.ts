@@ -225,6 +225,38 @@ export async function saveContent(formData: FormData) {
     redirect(dashboardReturn(formData, "saved"));
   }
 
+  if (resource === "site_images") {
+    const imageKey = typeof payload.image_key === "string" ? payload.image_key : null;
+    if (!imageKey) redirect(dashboardReturn(formData, "saved", "missing-image-key"));
+
+    const { data: existing, error: lookupError } = await supabase
+      .from("site_images")
+      .select("id, object_path, public_url")
+      .eq("image_key", imageKey)
+      .maybeSingle();
+    if (lookupError) {
+      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
+      redirect(dashboardReturn(formData, "saved", lookupError.message));
+    }
+
+    const mergedPayload = {
+      ...payload,
+      object_path: payload.object_path ?? existing?.object_path ?? null,
+      public_url: payload.public_url ?? existing?.public_url ?? null,
+    };
+    const targetId = existing?.id ?? id ?? null;
+    const { error } = targetId
+      ? await supabase.from("site_images").update(mergedPayload).eq("id", targetId)
+      : await supabase.from("site_images").insert(mergedPayload);
+    if (error) {
+      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
+      redirect(dashboardReturn(formData, "saved", error.message));
+    }
+    revalidatePath("/");
+    revalidatePath("/admin/dashboard");
+    redirect(dashboardReturn(formData, "saved"));
+  }
+
   const query = id ? supabase.from(resource).update(payload).eq("id", id) : supabase.from(resource).insert(payload);
   const { error } = await query;
   if (error) {
