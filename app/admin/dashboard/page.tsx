@@ -120,7 +120,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
   const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
   const { data: promotionTiers } = await supabase.from("promotion_tiers").select("*").order("sort_order");
-  const loadError = results.find((result) => result.error)?.error?.message;
+  const loadError = results.find((result, index) => tables[index] !== "faq_items" && result.error)?.error?.message;
+  const faqResult = results[tables.indexOf("faq_items")];
+  const faqNeedsMigration = activeModule === "faq" && Boolean(faqResult.error);
   const visibleError = params.error ? errorMessages[params.error] ?? params.error : undefined;
   const successMessage = params.status === "saved" ? "Đã lưu thay đổi." : params.status === "deleted" ? "Đã xóa nội dung." : params.status === "uploaded" ? "Đã upload ảnh website." : null;
 
@@ -144,6 +146,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </header>
 
         {visibleError || loadError ? <p className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</p> : null}
+        {faqNeedsMigration ? <p className="mt-5 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm leading-6 text-amber-200">Module FAQ chưa được kích hoạt trên Supabase. Chạy migration <code>20260701_faq_admin_cms.sql</code> trong SQL Editor, sau đó tải lại trang.</p> : null}
         {successMessage ? <p className="mt-5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">{successMessage}</p> : null}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
@@ -182,7 +185,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </section>
             ) : null}
 
-            {resource ? (
+            {resource && !faqNeedsMigration ? (
               <>
                 <form className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:grid-cols-[1fr_180px_auto]">
                   <input type="hidden" name="module" value={activeModule} />
