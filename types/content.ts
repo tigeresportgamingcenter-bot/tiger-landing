@@ -217,6 +217,7 @@ export interface ContactContent {
 }
 
 export interface FaqItem {
+  id: string;
   question: string;
   answer: string;
 }

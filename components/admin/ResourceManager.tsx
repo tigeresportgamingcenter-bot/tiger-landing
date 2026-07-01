@@ -31,7 +31,7 @@ const groupLabels: Record<NonNullable<AdminField["group"]>, string> = {
 };
 
 function recordLabel(record: Record<string, unknown>) {
-  return String(record.name ?? record.display_name ?? record.title ?? record.image_key ?? record.slug ?? record.id);
+  return String(record.name ?? record.display_name ?? record.title ?? record.question ?? record.image_key ?? record.slug ?? record.id);
 }
 
 function recordStatus(record: Record<string, unknown>, resource: string) {

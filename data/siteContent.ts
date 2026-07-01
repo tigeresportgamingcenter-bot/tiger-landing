@@ -47,10 +47,10 @@ export const contactContent: ContactContent = {
 };
 
 export const faqItems: FaqItem[] = [
-  { question: "Tiger Esports có mở 24/7 không?", answer: "Có. Cả bốn cơ sở Tiger Esports hiện hoạt động 24/7." },
-  { question: "Có cần đặt máy trước không?", answer: "Bạn có thể đến trực tiếp hoặc gọi Tiger trước để kiểm tra tình trạng máy, đặc biệt vào giờ cao điểm." },
-  { question: "Combo mua ở đâu?", answer: "Combo được đăng ký trực tiếp tại quầy. Hãy gọi hotline hoặc nhắn Zalo để xác nhận chương trình đang áp dụng." },
-  { question: "Khuyến mãi áp dụng ở cơ sở nào?", answer: "Phạm vi áp dụng được ghi trên từng chương trình và có thể khác nhau theo cơ sở." },
-  { question: "Tiger có tổ chức giải đấu định kỳ không?", answer: "Tiger tổ chức các hoạt động và giải đấu cộng đồng theo từng thời điểm. Lịch đã xác minh được cập nhật tại mục Giải đấu." },
-  { question: "Có máy thi đấu 360Hz không?", answer: "Hạng máy Thi đấu có màn hình 360Hz. Vui lòng gọi trước để kiểm tra số máy trống tại cơ sở bạn muốn đến." },
+  { id: "open-24-7", question: "Tiger Esports có mở 24/7 không?", answer: "Có. Các cơ sở Tiger Esports hoạt động 24/7, phù hợp cả chơi ban ngày, chơi đêm, đi nhóm hoặc luyện tập trước giải. Vào giờ cao điểm, anh em nên gọi trước để được hỗ trợ chọn khu máy phù hợp." },
+  { id: "booking", question: "Có cần đặt máy trước không?", answer: "Không bắt buộc. Khách có thể đến trực tiếp quầy để chọn máy. Nếu đi theo nhóm, cần ngồi cạnh nhau hoặc muốn chơi khu máy thi đấu/SVIP, anh em nên gọi trước để nhân viên hỗ trợ sắp xếp." },
+  { id: "buy-combo", question: "Combo mua ở đâu?", answer: "Combo giờ chơi có thể mua trên App Dodonew hoặc hỏi trực tiếp tại quầy. Một số combo có điều kiện riêng về thời gian, cơ sở áp dụng hoặc hạng máy, nên anh em hãy kiểm tra kỹ thông tin trên chương trình đang hiển thị." },
+  { id: "promotion-scope", question: "Khuyến mãi áp dụng ở cơ sở nào?", answer: "Tùy từng chương trình. Nếu chương trình ghi “Tất cả cơ sở” thì áp dụng toàn hệ thống Tiger Esports. Nếu có ghi tên cơ sở cụ thể, khuyến mãi chỉ áp dụng tại cơ sở đó trong thời gian thông báo." },
+  { id: "tournaments", question: "Tiger có tổ chức giải đấu định kỳ không?", answer: "Có. Tiger Esports tổ chức các giải cộng đồng theo từng thời điểm cho FC Online, TFT, Valorant, AOE và các tựa game phù hợp. Các giải đang mở đăng ký và tổng kết giải đã kết thúc sẽ được cập nhật trên website." },
+  { id: "monitor-360hz", question: "Có máy thi đấu 360Hz không?", answer: "Có. Tiger Esports có khu máy thi đấu với màn hình tần số quét cao, phù hợp cho các tựa game cần phản xạ nhanh như Valorant, PUBG, FC Online và các giải đấu cộng đồng." },
 ];

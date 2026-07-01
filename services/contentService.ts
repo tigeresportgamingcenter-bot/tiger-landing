@@ -68,6 +68,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       pcTiers: remote.pcTiers ?? fallback.pcTiers,
       tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
       completedTournamentEvents: remote.completedTournamentEvents ?? fallback.completedTournamentEvents,
+      faqItems: remote.faqItems ?? fallback.faqItems,
     };
   } catch {
     return fallback;

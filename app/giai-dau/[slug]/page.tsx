@@ -113,7 +113,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
         <article className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-              <h2 className="text-sm font-extrabold uppercase tracking-wider text-zinc-400">Thông tin nhanh</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-zinc-400">Thông tin giải đấu</h2>
               <dl className="mt-5 space-y-4 text-sm">
                 {eventDate ? <div className="flex gap-3"><CalendarDays className="size-5 shrink-0 text-tiger-orange" /><div><dt className="text-zinc-500">Thời gian</dt><dd className="font-semibold text-white">{eventDate}</dd></div></div> : null}
                 {tournament.branchName ? <div className="flex gap-3"><MapPin className="size-5 shrink-0 text-tiger-orange" /><div><dt className="text-zinc-500">Cơ sở</dt><dd className="font-semibold text-white">{tournament.branchName}</dd></div></div> : null}

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers"] as const;
+const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items"] as const;
 type Resource = (typeof resources)[number];
 const buckets = ["hero", "branches", "community", "hall-of-fame", "members"] as const;
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -178,6 +178,7 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
   }
   if (resource === "site_images") return { ...common, image_key: text(formData, "image_key"), media_type: text(formData, "media_type") === "video" ? "video" : "image", bucket: text(formData, "bucket") ?? "hero", object_path: text(formData, "object_path"), public_url: text(formData, "public_url"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), alt_text: text(formData, "alt_text") };
   if (resource === "pc_tiers") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), subtitle: text(formData, "subtitle"), cpu: text(formData, "cpu"), gpu: text(formData, "gpu"), ram: text(formData, "ram"), monitor: text(formData, "monitor"), mainboard: text(formData, "mainboard"), storage: text(formData, "storage"), peripherals: text(formData, "peripherals"), note: text(formData, "note"), branch_scope: text(formData, "branch_scope"), sort_order: Number(text(formData, "sort_order") ?? 0), featured: checked(formData, "featured") };
+  if (resource === "faq_items") return { ...common, question: text(formData, "question"), answer: text(formData, "answer"), sort_order: Number(text(formData, "sort_order") ?? 0) };
   const mediaType = text(formData, "media_type") === "video" ? "video" : "image";
   const imageUrl = text(formData, "image_url");
   const videoUrl = text(formData, "video_url");

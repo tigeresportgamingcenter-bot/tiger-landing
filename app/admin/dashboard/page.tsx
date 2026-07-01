@@ -6,7 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
-type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "pc_tiers" | "gallery";
+type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "pc_tiers" | "gallery" | "faq";
 
 const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox", group: "status" }, { name: "verified", label: "Đã xác minh", type: "checkbox", group: "status" }];
 const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea", group: "details" }, { name: "image_url", label: "Ảnh cơ sở", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
@@ -16,6 +16,7 @@ const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rú
 const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea", group: "details" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
 const siteImageFields: AdminField[] = [{ name: "image_key", label: "Khóa media (hero dùng hero-main)", required: true }, { name: "media_type", label: "Loại media hero", type: "select", options: [{ value: "image", label: "Ảnh" }, { value: "video", label: "Video" }] }, { name: "public_url", label: "Ảnh hero / ảnh fallback", type: "image", group: "media" }, { name: "video_url", label: "Video hero", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Poster video", type: "image", group: "media" }, { name: "alt_text", label: "Alt text", required: true }, { name: "bucket", label: "Bucket", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"], group: "status" }, { name: "object_path", label: "Đường dẫn object (tự điền khi upload)", group: "status" }, ...commonFields];
 const pcTierFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên hạng máy", required: true }, { name: "subtitle", label: "Mô tả ngắn" }, { name: "cpu", label: "CPU", required: true }, { name: "gpu", label: "GPU", required: true }, { name: "ram", label: "RAM", required: true }, { name: "monitor", label: "Màn hình", required: true }, { name: "mainboard", label: "Mainboard", group: "details" }, { name: "storage", label: "Ổ cứng", group: "details" }, { name: "peripherals", label: "Thiết bị ngoại vi", type: "textarea", group: "details" }, { name: "note", label: "Ghi chú", type: "textarea", group: "details" }, { name: "branch_scope", label: "Phạm vi cơ sở", group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
+const faqFields: AdminField[] = [{ name: "question", label: "Câu hỏi", required: true }, { name: "answer", label: "Câu trả lời", type: "textarea", required: true, group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
 
 const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: string }> = [
   { key: "overview", label: "Tổng quan", title: "Tổng quan" },
@@ -26,6 +27,7 @@ const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: 
   { key: "honors", label: "Vinh danh", resource: "hall_of_fame_members", title: "Hội viên vinh danh" },
   { key: "pc_tiers", label: "Dàn máy / Cấu hình", resource: "pc_tiers", title: "Dàn máy / Cấu hình" },
   { key: "gallery", label: "Gallery", resource: "gallery_items", title: "Gallery" },
+  { key: "faq", label: "Thông tin cần biết / FAQ", resource: "faq_items", title: "Thông tin cần biết / FAQ" },
 ];
 
 const moduleFields: Record<string, AdminField[]> = {
@@ -36,6 +38,7 @@ const moduleFields: Record<string, AdminField[]> = {
   site_images: siteImageFields,
   pc_tiers: pcTierFields,
   gallery_items: galleryFields,
+  faq_items: faqFields,
 };
 
 const errorMessages: Record<string, string> = {
@@ -113,7 +116,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
   if (!membership) redirect("/admin/login?error=permission");
 
-  const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers"] as const;
+  const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items"] as const;
   const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
   const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
   const { data: promotionTiers } = await supabase.from("promotion_tiers").select("*").order("sort_order");
@@ -167,7 +170,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {activeModule === "media" ? (
               <section className="rounded-2xl border border-tiger-orange/25 bg-tiger-orange/5 p-5">
                 <h2 className="text-2xl font-extrabold">Upload ảnh website</h2>
-                <p className="mt-2 text-sm text-zinc-500">Dùng cho hero/community/branch/member. Ảnh mới luôn ở trạng thái chưa xuất bản.</p>
+                <p className="mt-2 text-sm text-zinc-500">Dùng cho hero/community/branch/member. Khuyến nghị video hero MP4/WebM public URL từ Supabase Storage, dài 5–12 giây và tắt âm. Media mới luôn ở trạng thái chưa xuất bản.</p>
                 <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
                   <input type="hidden" name="return_to" value={returnTo} />
                   <select name="bucket" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3"><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
@@ -203,7 +206,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   moduleHref={moduleHref}
                   returnTo={returnTo}
                   selectedId={selectedEdit}
-                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Chọn đúng loại chương trình. Combo dùng Giá combo + Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp, không nhập JSON và không dùng nhãn Giá." : undefined}
+                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Chọn đúng loại chương trình. Combo dùng Giá combo + Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp, không nhập JSON và không dùng nhãn Giá." : resource === "site_images" ? "Hero đầu trang dùng khóa hero-main. Chọn Ảnh hoặc Video; video nên là MP4/WebM 5–12 giây, tắt âm và có poster/ảnh fallback." : resource === "faq_items" ? "Mỗi bản ghi là một câu hỏi và câu trả lời. Chỉ nội dung đã xác minh và đang hiển thị mới xuất hiện ngoài website." : undefined}
                 />
               </>
             ) : null}
