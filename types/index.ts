@@ -4,6 +4,7 @@ export type {
   ContentImage,
   ContentVideo,
   ContactContent,
+  FaqItem,
   GalleryItem,
   HeroContent,
   HeroStat,

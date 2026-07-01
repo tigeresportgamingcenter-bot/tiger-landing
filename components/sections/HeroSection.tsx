@@ -1,8 +1,8 @@
 import { ArrowDown, Gamepad2, Zap } from "lucide-react";
-import Image from "next/image";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Container } from "@/components/ui/Container";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { HeroMedia } from "@/components/ui/HeroMedia";
 import type { HeroContent } from "@/types";
 
 interface HeroSectionProps {
@@ -13,10 +13,12 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ content, branchCount, tierCount, hotline }: HeroSectionProps) {
+  const safeBranchCount = branchCount > 0 ? branchCount : 4;
+  const safeTierCount = tierCount > 0 ? tierCount : 4;
   return (
     <section id="trang-chu" className="hero-grid relative flex min-h-[760px] items-center overflow-hidden pt-20">
-      {content.image ? <Image src={content.image.src} alt={content.image.alt} fill priority quality={82} sizes="100vw" className="object-cover" /> : null}
-      <div className={`absolute inset-0 ${content.image ? "bg-gradient-to-r from-black via-black/85 to-black/45" : "bg-[radial-gradient(circle_at_72%_45%,rgba(239,43,35,0.2),transparent_28%),radial-gradient(circle_at_20%_80%,rgba(255,106,0,0.12),transparent_30%)]"}`} />
+      <HeroMedia mediaType={content.mediaType} image={content.image} video={content.video} />
+      <div className={`absolute inset-0 ${content.image || content.video ? "bg-gradient-to-r from-black via-black/85 to-black/45" : "bg-[radial-gradient(circle_at_72%_45%,rgba(239,43,35,0.2),transparent_28%),radial-gradient(circle_at_20%_80%,rgba(255,106,0,0.12),transparent_30%)]"}`} />
       <div className="absolute right-[-10%] top-[22%] hidden select-none font-display text-[22vw] font-black leading-none text-white/[0.025] lg:block">T</div>
       <Container className="relative py-20 sm:py-28">
         <div className="max-w-3xl">
@@ -33,8 +35,8 @@ export function HeroSection({ content, branchCount, tierCount, hotline }: HeroSe
             <ButtonLink href={`tel:${hotline}`} variant="secondary">Gọi ngay <Gamepad2 className="size-4" /></ButtonLink>
           </div>
           <div className="hero-enter hero-enter-5 mt-14 flex flex-wrap gap-x-10 gap-y-5 border-t border-white/10 pt-7">
-            <div><p className="font-display text-2xl font-black text-white"><AnimatedCounter value={branchCount} /></p><p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">Cơ sở</p></div>
-            <div><p className="font-display text-2xl font-black text-white"><AnimatedCounter value={tierCount} /></p><p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">Hạng máy</p></div>
+            <div><p className="font-display text-2xl font-black text-white"><AnimatedCounter value={safeBranchCount} /></p><p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">Cơ sở</p></div>
+            <div><p className="font-display text-2xl font-black text-white"><AnimatedCounter value={safeTierCount} /></p><p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">Hạng máy</p></div>
             <div><p className="font-display text-2xl font-black text-white">READY</p><p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">{content.readinessLabel}</p></div>
           </div>
         </div>

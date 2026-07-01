@@ -22,9 +22,9 @@ function formatDate(value: string) {
 
 function validityLabel(promotion: Promotion) {
   if (promotion.validFrom && promotion.validUntil) return `Áp dụng từ ${formatDate(promotion.validFrom)} đến ${formatDate(promotion.validUntil)}`;
-  if (promotion.validFrom) return `Áp dụng từ ${formatDate(promotion.validFrom)}`;
+  if (promotion.validFrom) return `Áp dụng từ ${formatDate(promotion.validFrom)} đến khi có thông báo mới`;
   if (promotion.validUntil) return `Áp dụng đến ${formatDate(promotion.validUntil)}`;
-  return "Đang áp dụng";
+  return promotion.promotionType === "combo" ? "Áp dụng đến khi có thông báo mới" : "Đang áp dụng";
 }
 
 function PromotionCard({ promotion, actionHref, compact = false }: { promotion: Promotion; actionHref: string; compact?: boolean }) {
@@ -52,11 +52,12 @@ function PromotionCard({ promotion, actionHref, compact = false }: { promotion: 
         {!isTopupBonus && promotion.price !== null ? <p className="mt-3 text-3xl font-extrabold text-gradient">{formatPrice(promotion.price)}đ</p> : null}
 
         {isTopupBonus && promotion.tiers.length > 0 ? (
-          <div className="mt-5 space-y-2 rounded-2xl border border-tiger-orange/20 bg-black/25 p-4">
+          <div className="mt-5 overflow-hidden rounded-2xl border border-tiger-orange/25 bg-black/30">
+            <div className="grid grid-cols-2 border-b border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500"><span>Nạp</span><span className="text-right">Nhận</span></div>
             {promotion.tiers.map((tier) => (
-              <div key={`${tier.payAmount}-${tier.receiveAmount}-${tier.sortOrder}`} className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                <span className="text-sm font-bold text-white">Nạp {formatPrice(tier.payAmount)}đ</span>
-                <span className="text-sm font-extrabold text-orange-300">Nhận {formatPrice(tier.receiveAmount)}đ</span>
+              <div key={`${tier.payAmount}-${tier.receiveAmount}-${tier.sortOrder}`} className="grid grid-cols-2 items-center border-b border-white/5 px-4 py-3 last:border-0">
+                <span className="text-sm font-bold text-white">{formatPrice(tier.payAmount / 1000)}K</span>
+                <span className="text-right text-base font-extrabold text-orange-300">{formatPrice(tier.receiveAmount / 1000)}K{tier.bonusAmount > 0 ? <small className="ml-1.5 text-[10px] font-bold text-orange-200/70">+{formatPrice(tier.bonusAmount / 1000)}K</small> : null}</span>
               </div>
             ))}
           </div>

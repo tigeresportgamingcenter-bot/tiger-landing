@@ -9,6 +9,8 @@ export interface SupabaseContent {
   tournaments?: Tournament[];
   hallOfFame?: HallOfFameContent;
   heroImage?: ContentImage;
+  heroMediaType?: "image" | "video";
+  heroVideo?: ContentVideo;
   communityImage?: ContentImage;
   galleryItems?: GalleryItem[];
   featuredPromotion?: Promotion;
@@ -128,6 +130,11 @@ function mapTournament(row: Record<string, unknown>): TournamentEvent | null {
     video: safeVideo(row.video_url, row.video_provider, row.poster_url, `Ảnh đại diện video ${row.name}`),
     rules: typeof row.rules === "string" ? row.rules : null,
     entryFee: typeof row.entry_fee === "number" ? row.entry_fee : null,
+    format: typeof row.format === "string" && row.format.trim() ? row.format : null,
+    prizePool: row.prize_pool === null || row.prize_pool === undefined ? null : String(row.prize_pool),
+    prizeFirst: typeof row.prize_first === "string" && row.prize_first.trim() ? row.prize_first : null,
+    prizeSecond: typeof row.prize_second === "string" && row.prize_second.trim() ? row.prize_second : null,
+    prizeThird: typeof row.prize_third === "string" && row.prize_third.trim() ? row.prize_third : null,
     status,
     registrationUrl: safeUrl(row.registration_url),
     registrationOpen,
@@ -196,13 +203,32 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const mappedEvents = tournamentRows.map((row) => mapTournament(row)).filter((event): event is TournamentEvent => Boolean(event));
   const tournaments: Tournament[] = games.map((game) => ({ id: game.toLowerCase().replaceAll(" ", "-"), game, description: communityGameDescriptions[game] }));
   const hallTournaments: HallOfFameTournament[] = mappedEvents.filter((event) => event.status === "completed" && event.showInHallOfFame).map((event) => ({ id: event.slug, slug: event.slug, status: "verified", name: event.name, game: event.game, heldOn: event.heldOn ?? event.startsAt, branchName: event.branchName, placements: event.placements, image: event.image, video: event.video, showInHallOfFame: true }));
-  const members: HonoredMember[] = (memberResult.error ? [] : memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({ id: row.id, status: "verified", displayName: row.display_name, tier: row.tier as MemberTier, periodLabel: row.period_label, consentConfirmed: true, image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`) }));
+  const allMembers: HonoredMember[] = (memberResult.error ? [] : memberResult.data ?? []).filter((row) => memberTiers.includes(row.tier as MemberTier)).map((row) => ({
+    id: row.id,
+    status: "verified",
+    displayName: row.display_name,
+    tier: row.tier as MemberTier,
+    periodLabel: typeof row.period_label === "string" ? row.period_label : null,
+    honorMonth: typeof row.honor_month === "string" ? row.honor_month : null,
+    memberPoints: Math.max(0, Number(row.member_points ?? 0)),
+    sortOrder: Number(row.sort_order ?? 0),
+    note: typeof row.note === "string" && row.note.trim() ? row.note : null,
+    consentConfirmed: true,
+    image: safeImage(row.image_url, row.image_alt || `Hội viên ${row.display_name}`),
+  }));
+  const newestHonorMonth = allMembers.map((member) => member.honorMonth).filter((value): value is string => Boolean(value)).sort().at(-1) ?? null;
+  const members = allMembers
+    .filter((member) => !newestHonorMonth || member.honorMonth === newestHonorMonth)
+    .sort((a, b) => b.memberPoints - a.memberPoints || a.sortOrder - b.sortOrder || String(a.displayName).localeCompare(String(b.displayName), "vi"));
 
   const images = new Map<string, ContentImage>();
   for (const row of imageResult.error ? [] : imageResult.data ?? []) {
     const image = safeImage(row.public_url, row.alt_text);
     if (image) images.set(row.image_key, image);
   }
+  const heroRow = (imageResult.error ? [] : imageResult.data ?? []).find((row) => row.image_key === "hero-main");
+  const heroVideo = heroRow ? safeVideo(heroRow.video_url, heroRow.video_provider, heroRow.poster_url, typeof heroRow.alt_text === "string" ? heroRow.alt_text : "Video không gian Tiger Esports") : null;
+  const heroMediaType = heroRow?.media_type === "video" && heroVideo ? "video" : "image";
 
   const galleryItems: GalleryItem[] = (galleryResult.error ? [] : galleryResult.data ?? []).flatMap((row) => {
     const mediaType = row.media_type === "video" ? "video" : "image";
@@ -240,6 +266,8 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     tournaments: tournaments.length ? tournaments : undefined,
     hallOfFame: { tournaments: hallTournaments, members, consentNotice: "Danh sách vinh danh theo từng tháng và chỉ hiển thị khi khách hàng đồng ý." },
     heroImage: images.get("hero-main"),
+    heroMediaType,
+    heroVideo: heroVideo ?? undefined,
     communityImage: images.get("community-tournament"),
     galleryItems: galleryItems.length ? galleryItems : undefined,
     featuredPromotion: promotions.find((promotion) => promotion.featured) ?? promotions[0],

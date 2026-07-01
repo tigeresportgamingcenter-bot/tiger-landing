@@ -6,7 +6,7 @@ import { MediaUploadField } from "./MediaUploadField";
 export interface AdminField {
   name: string;
   label: string;
-  type?: "text" | "number" | "date" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video" | "promotion-tiers";
+  type?: "text" | "number" | "date" | "month" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video" | "promotion-tiers";
   required?: boolean;
   options?: Array<string | { label: string; value: string }>;
   group?: "main" | "media" | "status" | "details";

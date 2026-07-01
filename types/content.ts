@@ -121,6 +121,10 @@ export interface HonoredMember {
   displayName: string | null;
   tier: MemberTier | null;
   periodLabel: string | null;
+  honorMonth: string | null;
+  memberPoints: number;
+  sortOrder: number;
+  note: string | null;
   consentConfirmed: boolean;
   image: ContentImage | null;
 }
@@ -146,6 +150,11 @@ export interface TournamentEvent {
   video: ContentVideo | null;
   rules: string | null;
   entryFee: number | null;
+  format: string | null;
+  prizePool: string | null;
+  prizeFirst: string | null;
+  prizeSecond: string | null;
+  prizeThird: string | null;
   status: TournamentStatus;
   registrationUrl: string | null;
   registrationOpen: boolean;
@@ -187,6 +196,8 @@ export interface HeroContent {
   supportingText: string;
   readinessLabel: string;
   image: ContentImage | null;
+  mediaType: "image" | "video";
+  video: ContentVideo | null;
 }
 
 export interface CommunityHighlight {
@@ -203,6 +214,11 @@ export interface ContactContent {
   zaloLabel: string;
   mapsLabel: string;
   hotlineLabel: string;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
 }
 
 export interface SiteContent {
@@ -224,4 +240,5 @@ export interface SiteContent {
   galleryItems: GalleryItem[];
   tournamentEvents: TournamentEvent[];
   completedTournamentEvents: TournamentEvent[];
+  faqItems: FaqItem[];
 }

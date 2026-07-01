@@ -30,7 +30,7 @@ export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
           {tiers.map((tier, index) => (
             <article key={tier.id} className={`rounded-2xl border p-6 sm:p-8 ${tier.featured ? "border-tiger-orange/50 bg-gradient-to-br from-tiger-red/15 to-white/[0.03] shadow-glow" : "border-white/10 bg-white/[0.03]"}`}>
               <div className="flex items-start justify-between gap-4">
-                <div><p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Hạng máy</p><h3 className="mt-2 text-3xl font-extrabold uppercase text-white">{tier.name}</h3></div>
+                <div><p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Cấu hình</p><h3 className="mt-2 text-3xl font-extrabold uppercase text-white">{tier.name}</h3></div>
                 <span className="font-display text-4xl font-black text-white/10">0{index + 1}</span>
               </div>
               <p className="mt-4 text-sm leading-6 text-zinc-400">{tier.description}</p>

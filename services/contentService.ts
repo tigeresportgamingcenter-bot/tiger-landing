@@ -7,7 +7,7 @@ import { pricing } from "@/data/pricing";
 import { promotions } from "@/data/promotions";
 import { socialLinks } from "@/data/socialLinks";
 import { tournaments } from "@/data/tournaments";
-import { communityHighlights, communityImage, contactContent, heroContent, navigation, siteSettings } from "@/data/siteContent";
+import { communityHighlights, communityImage, contactContent, faqItems, heroContent, navigation, siteSettings } from "@/data/siteContent";
 import type { ContentImage, SiteContent } from "@/types";
 import { getSupabaseContent, getSupabaseTournamentBySlug } from "./supabaseContentService";
 import type { TournamentEvent } from "@/types";
@@ -42,6 +42,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     galleryItems: [],
     tournamentEvents: [],
     completedTournamentEvents: [],
+    faqItems,
   };
 
   try {
@@ -54,7 +55,12 @@ export async function getSiteContent(): Promise<SiteContent> {
       promotions: remotePromotions,
       upcomingPromotions: remote.upcomingPromotions ?? fallback.upcomingPromotions,
       tournaments: remote.tournaments ?? fallback.tournaments,
-      heroContent: { ...fallback.heroContent, image: remote.heroImage ?? fallback.heroContent.image },
+      heroContent: {
+        ...fallback.heroContent,
+        image: remote.heroImage ?? fallback.heroContent.image,
+        mediaType: remote.heroMediaType ?? fallback.heroContent.mediaType,
+        video: remote.heroVideo ?? fallback.heroContent.video,
+      },
       communityImage: remote.communityImage ?? fallback.communityImage,
       hallOfFame: remote.hallOfFame ?? fallback.hallOfFame,
       featuredPromotion: remote.featuredPromotion ?? remotePromotions.find((promotion) => promotion.featured) ?? fallback.featuredPromotion,
@@ -92,6 +98,11 @@ export async function getPublishedTournamentBySlug(slug: string): Promise<Tourna
     video: staticTournament.video,
     rules: null,
     entryFee: null,
+    format: null,
+    prizePool: null,
+    prizeFirst: null,
+    prizeSecond: null,
+    prizeThird: null,
     status: "completed",
     registrationUrl: null,
     registrationOpen: false,

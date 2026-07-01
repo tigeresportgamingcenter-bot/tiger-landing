@@ -33,6 +33,7 @@ function defaultImageBucket(resource: string) {
   if (resource === "tournaments") return "hall-of-fame";
   if (resource === "hall_of_fame_members") return "members";
   if (resource === "promotions") return "community";
+  if (resource === "site_images") return "hero";
   return "community";
 }
 
@@ -55,9 +56,9 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
     if (!file) return;
 
     const acceptedTypes = isImage ? allowedImageTypes : allowedVideoTypes;
-    const maxSize = isImage ? 5 * 1024 * 1024 : 25 * 1024 * 1024;
+    const maxSize = isImage ? 5 * 1024 * 1024 : resource === "site_images" ? 12 * 1024 * 1024 : 25 * 1024 * 1024;
     if (!acceptedTypes.includes(file.type as never) || file.size > maxSize) {
-      setStatus(isImage ? "Ảnh phải là JPEG/PNG/WebP và tối đa 5MB." : "Video phải là MP4/WebM và tối đa 25MB.");
+      setStatus(isImage ? "Ảnh phải là JPEG/PNG/WebP và tối đa 5MB." : `Video phải là MP4/WebM và tối đa ${resource === "site_images" ? 12 : 25}MB.`);
       event.currentTarget.value = "";
       return;
     }
@@ -113,7 +114,7 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
         className={`${className} mt-2 h-auto py-2 file:mr-3 file:rounded-md file:border-0 file:bg-tiger-orange file:px-3 file:py-2 file:text-xs file:font-bold file:text-white disabled:cursor-not-allowed disabled:opacity-60`}
       />
       <span className="mt-1 block text-[11px] text-zinc-600">
-        {isImage ? "JPEG, PNG hoặc WebP, tối đa 5MB." : "MP4 hoặc WebM, tối đa 25MB. File được upload trực tiếp lên Supabase, không đi qua Vercel."}
+        {isImage ? "JPEG, PNG hoặc WebP, tối đa 5MB." : `MP4 hoặc WebM, tối đa ${resource === "site_images" ? 12 : 25}MB. File được upload trực tiếp lên Supabase, không đi qua Vercel.`}
       </span>
       {status ? <span className="mt-1 block text-[11px] text-orange-300">{status}</span> : null}
     </label>

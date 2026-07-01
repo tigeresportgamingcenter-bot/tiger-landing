@@ -18,19 +18,21 @@ function imageBucket(resource: Resource, formData: FormData) {
   if (resource === "hall_of_fame_members") return "members";
   if (resource === "promotions") return "community";
   if (resource === "gallery_items") return text(formData, "bucket");
+  if (resource === "site_images") return "hero";
   return null;
 }
 
 async function uploadResourceMedia(supabase: Awaited<ReturnType<typeof requireAdmin>>, resource: Resource, formData: FormData) {
   const uploaded: Array<{ bucket: string; objectPath: string }> = [];
-  const fields = ["image_url", "poster_url", "video_url"] as const;
+  const fields = ["image_url", "public_url", "poster_url", "video_url"] as const;
   for (const field of fields) {
     const file = formData.get(`${field}_file`);
     if (!(file instanceof File) || file.size === 0) continue;
     const isVideo = field === "video_url";
     const bucket = isVideo ? "videos" : imageBucket(resource, formData);
     if (!bucket || (!isVideo && !buckets.includes(bucket as (typeof buckets)[number]))) throw new Error("invalid-media-bucket");
-    if (isVideo && (!allowedVideoTypes.includes(file.type as (typeof allowedVideoTypes)[number]) || file.size > 25 * 1024 * 1024)) throw new Error("invalid-video");
+    const videoLimit = resource === "site_images" ? 12 : 25;
+    if (isVideo && (!allowedVideoTypes.includes(file.type as (typeof allowedVideoTypes)[number]) || file.size > videoLimit * 1024 * 1024)) throw new Error("invalid-video");
     if (!isVideo && (!allowedImageTypes.includes(file.type as (typeof allowedImageTypes)[number]) || file.size > 5 * 1024 * 1024)) throw new Error("invalid-image");
     const extension = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : file.type === "video/mp4" ? "mp4" : file.type === "video/webm" ? "webm" : "webp";
     const objectPath = `${resource}/${field}/${Date.now()}-${randomUUID()}.${extension}`;
@@ -106,6 +108,8 @@ function validateCommon(formData: FormData) {
   if (checked(formData, "published") && !checked(formData, "verified")) throw new Error("publish-requires-verified");
   const imageUrl = text(formData, "image_url");
   if (imageUrl && !isValidImageUrl(imageUrl)) throw new Error("invalid-image-url");
+  const publicUrl = text(formData, "public_url");
+  if (publicUrl && !isValidImageUrl(publicUrl)) throw new Error("invalid-image-url");
   const posterUrl = text(formData, "poster_url");
   if (posterUrl && !isValidImageUrl(posterUrl)) throw new Error("invalid-poster-url");
   const videoUrl = text(formData, "video_url");
@@ -165,13 +169,14 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
     if (facebookPostUrl && !isValidWebUrl(facebookPostUrl)) throw new Error("invalid-facebook-post-url");
     const placements = [1, 2, 3].flatMap((position) => { const displayName = text(formData, `top_${position}`); return displayName ? [{ position, displayName }] : []; });
     const highlights = repeatedText(formData, "highlight", 5);
-    return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), game: text(formData, "game"), description: text(formData, "description") ?? "", held_on: text(formData, "held_on"), starts_at: text(formData, "starts_at"), ends_at: text(formData, "ends_at"), branch_name: text(formData, "branch_name"), placements, image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), status: registrationOpen ? "registration_open" : text(formData, "status") ?? "upcoming", registration_url: registrationUrl, registration_open: registrationOpen, entry_fee: text(formData, "entry_fee") ? Number(text(formData, "entry_fee")) : null, rules: text(formData, "rules"), show_in_hall_of_fame: checked(formData, "show_in_hall_of_fame"), featured: checked(formData, "featured"), sort_order: Number(text(formData, "sort_order") ?? 0), summary_title: text(formData, "summary_title"), summary_content: text(formData, "summary_content"), highlights, facebook_post_url: facebookPostUrl };
+    return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), game: text(formData, "game"), description: text(formData, "description") ?? "", held_on: text(formData, "held_on"), starts_at: text(formData, "starts_at"), ends_at: text(formData, "ends_at"), branch_name: text(formData, "branch_name"), format: text(formData, "format"), prize_pool: text(formData, "prize_pool"), prize_first: text(formData, "prize_first"), prize_second: text(formData, "prize_second"), prize_third: text(formData, "prize_third"), placements, image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), status: registrationOpen ? "registration_open" : text(formData, "status") ?? "upcoming", registration_url: registrationUrl, registration_open: registrationOpen, entry_fee: text(formData, "entry_fee") ? Number(text(formData, "entry_fee")) : null, rules: text(formData, "rules"), show_in_hall_of_fame: checked(formData, "show_in_hall_of_fame"), featured: checked(formData, "featured"), sort_order: Number(text(formData, "sort_order") ?? 0), summary_title: text(formData, "summary_title"), summary_content: text(formData, "summary_content"), highlights, facebook_post_url: facebookPostUrl };
   }
   if (resource === "hall_of_fame_members") {
     if (checked(formData, "published") && !checked(formData, "consent_confirmed")) throw new Error("member-consent-required");
-    return { ...common, display_name: text(formData, "display_name"), tier: text(formData, "tier"), period_label: text(formData, "period_label"), image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), consent_confirmed: checked(formData, "consent_confirmed") };
+    const honorMonth = text(formData, "honor_month");
+    return { ...common, display_name: text(formData, "display_name"), tier: text(formData, "tier"), period_label: honorMonth ? `Tháng ${honorMonth.slice(5, 7)}/${honorMonth.slice(0, 4)}` : null, honor_month: honorMonth ? `${honorMonth}-01` : null, member_points: Math.max(0, Number(text(formData, "member_points") ?? 0)), note: text(formData, "note"), sort_order: Number(text(formData, "sort_order") ?? 0), image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), consent_confirmed: checked(formData, "consent_confirmed") };
   }
-  if (resource === "site_images") return { ...common, image_key: text(formData, "image_key"), bucket: text(formData, "bucket"), object_path: text(formData, "object_path"), public_url: text(formData, "public_url"), alt_text: text(formData, "alt_text") };
+  if (resource === "site_images") return { ...common, image_key: text(formData, "image_key"), media_type: text(formData, "media_type") === "video" ? "video" : "image", bucket: text(formData, "bucket") ?? "hero", object_path: text(formData, "object_path"), public_url: text(formData, "public_url"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), alt_text: text(formData, "alt_text") };
   if (resource === "pc_tiers") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), subtitle: text(formData, "subtitle"), cpu: text(formData, "cpu"), gpu: text(formData, "gpu"), ram: text(formData, "ram"), monitor: text(formData, "monitor"), mainboard: text(formData, "mainboard"), storage: text(formData, "storage"), peripherals: text(formData, "peripherals"), note: text(formData, "note"), branch_scope: text(formData, "branch_scope"), sort_order: Number(text(formData, "sort_order") ?? 0), featured: checked(formData, "featured") };
   const mediaType = text(formData, "media_type") === "video" ? "video" : "image";
   const imageUrl = text(formData, "image_url");

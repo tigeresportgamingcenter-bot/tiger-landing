@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 export function AnimatedCounter({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
     const element = ref.current;
@@ -12,6 +12,7 @@ export function AnimatedCounter({ value }: { value: number }) {
     let frame = 0;
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
+      setDisplayValue(0);
       const startedAt = performance.now();
       const animate = (now: number) => {
         const progress = Math.min((now - startedAt) / 800, 1);
