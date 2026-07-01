@@ -33,9 +33,12 @@ function formatDate(value: string | null) {
 function cleanLine(value: string) {
   return value
     .replace(/^\s*(#{1,6}\s+|[-*•]+\s*)/, "")
-    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
     .replace(/_{2,}/g, "")
-    .replace(/^-{3,}\s*$/, "")
+    .replace(/-{3,}/g, " ")
+    .replace(/\p{Extended_Pictographic}/gu, "")
+    .replace(/[\uFE0E\uFE0F]/g, "")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
