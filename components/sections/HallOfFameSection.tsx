@@ -98,7 +98,15 @@ export function HallOfFameSection({ content, communityUrl }: HallOfFameSectionPr
           {visibleTournaments.length ? (
             <div>
               <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Vinh danh nhà vô địch</h3>{visibleTournaments.length > 1 ? <span className="text-xs text-zinc-600 sm:hidden">Vuốt để xem thêm →</span> : null}</div>
-              <div className="-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+              <div
+                className={`-mx-5 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:overflow-visible sm:px-0 ${
+                  visibleTournaments.length === 1
+                    ? "sm:mx-auto sm:max-w-md sm:grid-cols-1"
+                    : visibleTournaments.length === 2
+                      ? "sm:grid-cols-2"
+                      : "sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
                 {visibleTournaments.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} />)}
               </div>
             </div>
@@ -106,7 +114,7 @@ export function HallOfFameSection({ content, communityUrl }: HallOfFameSectionPr
           {visibleMembers.length ? (
             <div>
               <div className="flex items-center justify-between gap-4"><h3 className="text-xl font-extrabold text-white">Hội viên thân thiết{formatHonorMonth(visibleMembers[0]?.honorMonth ?? null, null) ? ` ${formatHonorMonth(visibleMembers[0].honorMonth, null)?.toLowerCase()}` : ""}</h3></div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className={`mt-5 grid gap-4 ${visibleMembers.length === 1 ? "sm:max-w-md" : "sm:grid-cols-2"}`}>
                 {visibleMembers.map((member, index) => <MemberCard key={member.id} member={member} rank={index + 1} />)}
               </div>
               <p className="mt-4 text-xs leading-5 text-zinc-600">{content.consentNotice}</p>

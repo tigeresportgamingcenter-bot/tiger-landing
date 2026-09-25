@@ -95,7 +95,15 @@ export function PromotionsSection({ promotions, upcomingPromotions = [], actionH
       <Container className="relative">
         <SectionHeading eyebrow="Ưu đãi Tiger" title="Khuyến mãi đang diễn ra" description="Các chương trình đang áp dụng tại Tiger Esports. Vui lòng liên hệ trước khi đến để xác nhận theo từng cơ sở." />
         {orderedPromotions.length ? (
-          <div className="-mx-5 mt-9 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+          <div
+            className={`-mx-5 mt-9 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:overflow-visible sm:px-0 ${
+              orderedPromotions.length === 1
+                ? "sm:mx-auto sm:max-w-md sm:grid-cols-1"
+                : orderedPromotions.length === 2
+                  ? "sm:grid-cols-2"
+                  : "sm:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {orderedPromotions.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} actionHref={actionHref} />)}
           </div>
         ) : null}
@@ -103,7 +111,7 @@ export function PromotionsSection({ promotions, upcomingPromotions = [], actionH
         {upcomingPromotions.length ? (
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.025] p-5">
             <h3 className="text-lg font-extrabold text-white">Sắp diễn ra</h3>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className={`mt-4 grid gap-4 ${upcomingPromotions.length === 1 ? "md:max-w-md" : "md:grid-cols-2"}`}>
               {upcomingPromotions.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} actionHref={actionHref} compact />)}
             </div>
           </div>
