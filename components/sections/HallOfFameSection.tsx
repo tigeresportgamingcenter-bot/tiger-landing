@@ -15,11 +15,11 @@ function formatDate(value: string | null) {
 function TournamentCard({ tournament }: { tournament: HallOfFameTournament }) {
   const visual = tournament.image ?? tournament.video?.poster;
   return (
-    <article className="relative min-w-[82vw] snap-center overflow-hidden rounded-2xl border border-tiger-orange/30 bg-white/[0.035] transition hover:border-tiger-orange sm:min-w-0">
+    <article className="card-glow-hover group relative min-w-[82vw] snap-center overflow-hidden rounded-2xl border border-tiger-orange/30 bg-white/[0.035] sm:min-w-0">
       <Link href={`/giai-dau/${tournament.slug}`} aria-label={`Xem tổng kết ${tournament.name ?? "giải đấu"}`} className="absolute inset-0 z-[1]" />
       {visual ? (
-        <div className="relative aspect-[16/9]">
-          <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 82vw, 36vw" className="object-cover" />
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 82vw, 36vw" className="object-cover transition duration-500 group-hover:scale-[1.04]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
         </div>
       ) : null}
@@ -61,7 +61,7 @@ function formatHonorMonth(value: string | null, fallback: string | null) {
 
 function MemberCard({ member, rank }: { member: HonoredMember; rank: number }) {
   return (
-    <article className="relative flex min-h-40 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+    <article className="card-glow-hover relative flex min-h-40 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-5">
       {rank <= 3 ? <span className="absolute right-4 top-4 rounded-full border border-tiger-orange/30 bg-black/40 px-2.5 py-1 text-xs font-black text-orange-300">#{rank}</span> : null}
       <div className="flex items-center gap-4">
         {member.image ? <div className="relative size-16 shrink-0 overflow-hidden rounded-xl"><Image src={member.image.src} alt={member.image.alt} fill sizes="64px" className="object-cover" /></div> : <span className="grid size-16 shrink-0 place-items-center rounded-xl bg-white/5"><Crown className="size-7 text-tiger-orange" /></span>}
@@ -89,7 +89,7 @@ export function HallOfFameSection({ content, communityUrl }: HallOfFameSectionPr
   if (!visibleTournaments.length && !visibleMembers.length) return null;
 
   return (
-    <section className="section-space bg-black" aria-labelledby="hall-of-fame-title">
+    <section className="section-space section-glow bg-black" aria-labelledby="hall-of-fame-title">
       <Container>
         <div id="hall-of-fame-title">
           <SectionHeading eyebrow="Hall of Fame" title="Vinh danh cộng đồng Tiger" description="Nơi ghi nhận thành tích giải đấu và những hội viên thân thiết đã đồng ý xuất hiện trên bảng vinh danh." />

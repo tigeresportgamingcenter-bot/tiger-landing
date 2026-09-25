@@ -31,10 +31,10 @@ function PromotionCard({ promotion, actionHref, compact = false }: { promotion: 
   const isTopupBonus = promotion.promotionType === "topup_bonus";
 
   return (
-    <article className="flex min-w-[86vw] snap-center flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#260806] via-[#120605] to-zinc-950 sm:min-w-0">
+    <article className="card-glow-hover group flex min-w-[86vw] snap-center flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#260806] via-[#120605] to-zinc-950 sm:min-w-0">
       {promotion.image ? (
         <div className="relative aspect-[16/9] overflow-hidden border-b border-white/10">
-          <Image src={promotion.image.src} alt={promotion.image.alt} fill sizes="(max-width: 639px) 86vw, (max-width: 1023px) 50vw, 33vw" className="object-cover" />
+          <Image src={promotion.image.src} alt={promotion.image.alt} fill sizes="(max-width: 639px) 86vw, (max-width: 1023px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-[1.04]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
         </div>
       ) : null}

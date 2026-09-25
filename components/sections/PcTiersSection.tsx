@@ -11,7 +11,7 @@ export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
     { key: "peripherals", icon: Mouse, label: "Thiết bị" },
   ] as const;
   return (
-    <section id="cau-hinh" className="section-space bg-black">
+    <section id="cau-hinh" className="section-space section-glow section-glow-alt bg-black">
       <Container>
         <SectionHeading eyebrow="Sức mạnh phần cứng" title="Cấu hình cho mọi trận chiến" description="Từ những trận rank giải trí tới đấu trường cạnh tranh, luôn có hạng máy phù hợp với bạn." centered />
         <div className="mt-8 space-y-3 md:hidden">
@@ -28,7 +28,7 @@ export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
         </div>
         <div className="mt-12 hidden gap-5 md:grid md:grid-cols-2">
           {tiers.map((tier, index) => (
-            <article key={tier.id} className={`rounded-2xl border p-6 sm:p-8 ${tier.featured ? "border-tiger-orange/50 bg-gradient-to-br from-tiger-red/15 to-white/[0.03] shadow-glow" : "border-white/10 bg-white/[0.03]"}`}>
+            <article key={tier.id} className={`card-glow-hover rounded-2xl border p-6 sm:p-8 ${tier.featured ? "border-tiger-orange/50 bg-gradient-to-br from-tiger-red/15 to-white/[0.03] shadow-glow" : "border-white/10 bg-white/[0.03]"}`}>
               <div className="flex items-start justify-between gap-4">
                 <div><p className="text-xs font-bold uppercase tracking-widest text-tiger-orange">Cấu hình</p><h3 className="mt-2 text-3xl font-extrabold uppercase text-white">{tier.name}</h3></div>
                 <span className="font-display text-4xl font-black text-white/10">0{index + 1}</span>
