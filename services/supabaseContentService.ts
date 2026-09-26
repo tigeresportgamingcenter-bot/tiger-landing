@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
-import type { Branch, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
+import type { Branch, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, PricingPlan, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
 
 export interface SupabaseContent {
   branches?: Branch[];
@@ -15,6 +15,7 @@ export interface SupabaseContent {
   galleryItems?: GalleryItem[];
   featuredPromotion?: Promotion;
   pcTiers?: PcTier[];
+  pricing?: PricingPlan[];
   tournamentEvents?: TournamentEvent[];
   completedTournamentEvents?: TournamentEvent[];
   faqItems?: FaqItem[];
@@ -153,7 +154,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const today = todayInVietnam();
 
-  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult] = await Promise.all([
+  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult, pricingResult] = await Promise.all([
     supabase.from("branches").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).or(`valid_from.is.null,valid_from.lte.${today}`).or(`valid_until.is.null,valid_until.gte.${today}`).order("featured", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).gt("valid_from", today).order("valid_from", { ascending: true }),
@@ -163,6 +164,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     supabase.from("gallery_items").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("pc_tiers").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("faq_items").select("*").eq("published", true).eq("verified", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
+    supabase.from("pricing_plans").select("*").eq("published", true).eq("verified", true).order("branch_scope", { ascending: true, nullsFirst: true }).order("sort_order"),
   ]);
 
   const branches: Branch[] = (branchResult.error ? [] : branchResult.data ?? []).map((row) => ({
@@ -256,6 +258,20 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     featured: Boolean(row.featured),
     description: row.subtitle || row.note || "",
   }));
+  const pricing: PricingPlan[] = (pricingResult.error ? [] : pricingResult.data ?? []).flatMap((row) => {
+    if (typeof row.slug !== "string" || typeof row.tier !== "string") return [];
+    const pricePerHour = Number(row.price_per_hour ?? 0);
+    if (!(pricePerHour > 0)) return [];
+    return [{
+      tierId: row.slug,
+      tier: row.tier,
+      pricePerHour,
+      note: typeof row.note === "string" ? row.note : "",
+      featured: Boolean(row.featured),
+      branchScope: typeof row.branch_scope === "string" && row.branch_scope.trim() ? row.branch_scope : null,
+    }];
+  });
+
   const faqItems: FaqItem[] = (faqResult.error ? [] : faqResult.data ?? []).flatMap((row) => {
     if (typeof row.id !== "string" || typeof row.question !== "string" || typeof row.answer !== "string" || !row.question.trim() || !row.answer.trim()) return [];
     return [{ id: row.id, question: row.question.trim(), answer: row.answer.trim() }];
@@ -278,6 +294,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     galleryItems: galleryItems.length ? galleryItems : undefined,
     featuredPromotion: promotions.find((promotion) => promotion.featured) ?? promotions[0],
     pcTiers: pcTiers.length ? pcTiers : undefined,
+    pricing: pricing.length ? pricing : undefined,
     tournamentEvents: tournamentEvents.length ? tournamentEvents : undefined,
     completedTournamentEvents: completedTournamentEvents.length ? completedTournamentEvents : undefined,
     faqItems: faqItems.length ? faqItems : undefined,

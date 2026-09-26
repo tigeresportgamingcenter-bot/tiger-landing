@@ -6,7 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
-type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "pc_tiers" | "gallery" | "faq";
+type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "pc_tiers" | "pricing" | "gallery" | "faq";
 
 const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox", group: "status" }, { name: "verified", label: "Đã xác minh", type: "checkbox", group: "status" }];
 const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea", group: "details" }, { name: "image_url", label: "Ảnh cơ sở", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
@@ -16,6 +16,7 @@ const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rú
 const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea", group: "details" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
 const siteImageFields: AdminField[] = [{ name: "image_key", label: "Khóa media (hero dùng hero-main)", required: true }, { name: "media_type", label: "Loại media hero", type: "select", options: [{ value: "image", label: "Ảnh" }, { value: "video", label: "Video" }] }, { name: "public_url", label: "Ảnh hero / ảnh fallback", type: "image", group: "media" }, { name: "video_url", label: "Video hero", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Poster video", type: "image", group: "media" }, { name: "alt_text", label: "Alt text", required: true }, { name: "bucket", label: "Bucket", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"], group: "status" }, { name: "object_path", label: "Đường dẫn object (tự điền khi upload)", group: "status" }, ...commonFields];
 const pcTierFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên hạng máy", required: true }, { name: "subtitle", label: "Mô tả ngắn" }, { name: "cpu", label: "CPU", required: true }, { name: "gpu", label: "GPU", required: true }, { name: "ram", label: "RAM", required: true }, { name: "monitor", label: "Màn hình", required: true }, { name: "mainboard", label: "Mainboard", group: "details" }, { name: "storage", label: "Ổ cứng", group: "details" }, { name: "peripherals", label: "Thiết bị ngoại vi", type: "textarea", group: "details" }, { name: "note", label: "Ghi chú", type: "textarea", group: "details" }, { name: "branch_scope", label: "Phạm vi cơ sở", group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
+const pricingFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "tier", label: "Tên hạng giá", required: true }, { name: "price_per_hour", label: "Giá / giờ", type: "number", required: true }, { name: "note", label: "Ghi chú", type: "textarea", group: "details" }, { name: "branch_scope", label: "Phạm vi cơ sở (để trống nếu áp dụng chung)", group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
 const faqFields: AdminField[] = [{ name: "question", label: "Câu hỏi", required: true }, { name: "answer", label: "Câu trả lời", type: "textarea", required: true, group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
 
 const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: string }> = [
@@ -26,6 +27,7 @@ const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: 
   { key: "tournaments", label: "Giải đấu", resource: "tournaments", title: "Giải đấu" },
   { key: "honors", label: "Vinh danh", resource: "hall_of_fame_members", title: "Hội viên vinh danh" },
   { key: "pc_tiers", label: "Dàn máy / Cấu hình", resource: "pc_tiers", title: "Dàn máy / Cấu hình" },
+  { key: "pricing", label: "Bảng giá / Giờ", resource: "pricing_plans", title: "Bảng giá theo giờ" },
   { key: "gallery", label: "Gallery", resource: "gallery_items", title: "Gallery" },
   { key: "faq", label: "Thông tin cần biết / FAQ", resource: "faq_items", title: "Thông tin cần biết / FAQ" },
 ];
@@ -37,6 +39,7 @@ const moduleFields: Record<string, AdminField[]> = {
   hall_of_fame_members: memberFields,
   site_images: siteImageFields,
   pc_tiers: pcTierFields,
+  pricing_plans: pricingFields,
   gallery_items: galleryFields,
   faq_items: faqFields,
 };
@@ -57,6 +60,7 @@ const errorMessages: Record<string, string> = {
   "member-consent-required": "Không thể công khai hội viên khi chưa xác nhận đồng ý.",
   "invalid-promotion-tier": "Mốc nạp phải có mức nạp > 0, khách nhận > 0 và khách nhận không nhỏ hơn mức nạp.",
   "invalid-combo-price": "Combo giờ chơi cần nhập Giá combo lớn hơn 0.",
+  "invalid-price-per-hour": "Giá / giờ phải lớn hơn 0.",
 };
 
 function statusOf(record: Row, resource?: string) {
@@ -116,10 +120,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
   if (!membership) redirect("/admin/login?error=permission");
 
-  const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items"] as const;
-  const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
+  const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "pricing_plans", "faq_items"] as const;
+  const [results, promotionTiersResult] = await Promise.all([
+    Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false }).limit(300))),
+    supabase.from("promotion_tiers").select("*").order("sort_order").limit(1000),
+  ]);
   const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
-  const { data: promotionTiers } = await supabase.from("promotion_tiers").select("*").order("sort_order");
+  const promotionTiers = promotionTiersResult.data;
   const loadError = results.find((result, index) => tables[index] !== "faq_items" && result.error)?.error?.message;
   const faqResult = results[tables.indexOf("faq_items")];
   const faqNeedsMigration = activeModule === "faq" && Boolean(faqResult.error);

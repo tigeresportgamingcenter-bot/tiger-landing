@@ -66,6 +66,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       featuredPromotion: remote.featuredPromotion ?? remotePromotions.find((promotion) => promotion.featured) ?? fallback.featuredPromotion,
       galleryItems: remote.galleryItems ?? fallback.galleryItems,
       pcTiers: remote.pcTiers ?? fallback.pcTiers,
+      pricing: remote.pricing ?? fallback.pricing,
       tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
       completedTournamentEvents: remote.completedTournamentEvents ?? fallback.completedTournamentEvents,
       faqItems: remote.faqItems ?? fallback.faqItems,

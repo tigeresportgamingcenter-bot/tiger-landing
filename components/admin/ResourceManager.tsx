@@ -2,6 +2,7 @@ import Link from "next/link";
 import { saveContent } from "@/app/admin/actions";
 import { DeleteContentButton } from "./DeleteContentButton";
 import { MediaUploadField } from "./MediaUploadField";
+import { SubmitButton } from "./SubmitButton";
 
 export interface AdminField {
   name: string;
@@ -183,7 +184,7 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
         />
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <button className="min-h-11 rounded-lg bg-gradient-to-r from-tiger-red to-tiger-orange px-5 text-sm font-bold text-white">{record ? "Lưu thay đổi" : "Tạo mới"}</button>
+        <SubmitButton label={record ? "Lưu thay đổi" : "Tạo mới"} className="min-h-11 rounded-lg bg-gradient-to-r from-tiger-red to-tiger-orange px-5 text-sm font-bold text-white" />
         <Link href={returnTo} className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 text-sm font-bold text-white">Hủy</Link>
       </div>
     </form>

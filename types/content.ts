@@ -56,10 +56,7 @@ export interface PricingPlan {
   pricePerHour: number;
   note: string;
   featured?: boolean;
-  branchIds: string[];
-  validFrom: string | null;
-  validUntil: string | null;
-  promotionStatus: "standard" | "promotional" | "unverified";
+  branchScope: string | null;
 }
 
 export interface Promotion {

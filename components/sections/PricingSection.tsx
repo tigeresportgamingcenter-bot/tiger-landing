@@ -6,19 +6,39 @@ import type { PricingPlan } from "@/types";
 
 const formatPrice = (value: number) => `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(value / 1000)}K`;
 
+function groupByBranch(pricing: PricingPlan[]) {
+  const scopes = Array.from(new Set(pricing.map((plan) => plan.branchScope)));
+  if (scopes.length <= 1) return [{ label: null as string | null, items: pricing }];
+  return scopes.map((scope) => ({ label: scope, items: pricing.filter((plan) => plan.branchScope === scope) }));
+}
+
+function PlanGrid({ items }: { items: PricingPlan[] }) {
+  return (
+    <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+      {items.map((plan) => (
+        <article key={plan.tierId} className={`relative min-w-[78vw] snap-center rounded-2xl border p-6 sm:min-w-0 ${plan.featured ? "border-tiger-orange bg-gradient-to-b from-tiger-red/20 to-white/[0.03]" : "border-white/10 bg-white/[0.03]"}`}>
+          {plan.featured ? <span className="absolute right-4 top-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-300"><Crown className="size-3.5" /> Đỉnh cao</span> : null}
+          <h3 className="text-xl font-extrabold uppercase text-white">{plan.tier}</h3>
+          <div className="mt-6 flex items-end gap-1"><span className="text-3xl font-extrabold text-white">{formatPrice(plan.pricePerHour)}</span><span className="pb-1 text-sm text-zinc-500">/ giờ</span></div>
+          <p className="mt-5 flex gap-2 text-sm leading-6 text-zinc-400"><Check className="mt-1 size-4 shrink-0 text-tiger-orange" />{plan.note}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export function PricingSection({ pricing, actionHref }: { pricing: PricingPlan[]; actionHref: string }) {
+  const groups = groupByBranch(pricing);
   return (
     <section id="bang-gia" className="section-space bg-zinc-950">
       <Container>
         <SectionHeading eyebrow="Bảng giá tham chiếu" title="Chọn hạng máy, vào trận ngay" description="Mức giá linh hoạt cho từng nhu cầu chơi game và thi đấu." centered />
-        <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-          {pricing.map((plan) => (
-            <article key={plan.tierId} className={`relative min-w-[78vw] snap-center rounded-2xl border p-6 sm:min-w-0 ${plan.featured ? "border-tiger-orange bg-gradient-to-b from-tiger-red/20 to-white/[0.03]" : "border-white/10 bg-white/[0.03]"}`}>
-              {plan.featured ? <span className="absolute right-4 top-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-300"><Crown className="size-3.5" /> Đỉnh cao</span> : null}
-              <h3 className="text-xl font-extrabold uppercase text-white">{plan.tier}</h3>
-              <div className="mt-6 flex items-end gap-1"><span className="text-3xl font-extrabold text-white">{formatPrice(plan.pricePerHour)}</span><span className="pb-1 text-sm text-zinc-500">/ giờ</span></div>
-              <p className="mt-5 flex gap-2 text-sm leading-6 text-zinc-400"><Check className="mt-1 size-4 shrink-0 text-tiger-orange" />{plan.note}</p>
-            </article>
+        <div className="mt-10 space-y-10">
+          {groups.map((group) => (
+            <div key={group.label ?? "all"}>
+              {group.label ? <h3 className="mb-4 text-center text-sm font-bold uppercase tracking-widest text-tiger-orange">{group.label}</h3> : null}
+              <PlanGrid items={group.items} />
+            </div>
           ))}
         </div>
         <div className="mt-8 flex flex-col items-center gap-5 text-center">
