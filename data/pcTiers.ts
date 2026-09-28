@@ -11,7 +11,7 @@ const descriptions = {
 export const pcTiers: PcTier[] = [
   // Tiger X - Trường Thi
   { id: "tiger-x-competition", name: "Thi đấu", subtitle: null, cpu: "Intel Core i5 13400F", gpu: "RTX 3060 Ti", ram: "16GB DDR4", monitor: "24 inch 360Hz", mainboard: "B760", storage: null, peripherals: "Chuột Gaming Zidli ZGM03 Pro, Phím Gaming Zidli K980, Tai nghe DAREU EH925", note: null, branchScope: "Tiger X", featured: true, description: descriptions.competition },
-  { id: "tiger-x-svip", name: "SVIP", subtitle: null, cpu: "AMD Ryzen 5 5500X", gpu: "RTX 2070 Super", ram: "16GB DDR4", monitor: "24 inch 260Hz", mainboard: "B450", storage: null, peripherals: "Chuột Logitech G102, Phím FUHLEN D, Tai nghe DAREU EH722X", note: null, branchScope: "Tiger X", featured: false, description: descriptions.svip },
+  { id: "tiger-x-svip", name: "SVIP", subtitle: null, cpu: "AMD Ryzen 5 5600X", gpu: "RTX 2070 Super", ram: "16GB DDR4", monitor: "24 inch 260Hz", mainboard: "B450", storage: null, peripherals: "Chuột Gaming Logitech G304, Phím Gaming Zidli K980, Tai nghe DAREU EH722X", note: null, branchScope: "Tiger X", featured: false, description: descriptions.svip },
   { id: "tiger-x-vip", name: "VIP", subtitle: null, cpu: "Intel Core i3 10105F", gpu: "RTX 1660 Super", ram: "16GB DDR4", monitor: "27 inch 165Hz", mainboard: "H510", storage: null, peripherals: "Chuột Logitech G102, Phím FUHLEN D, Tai nghe DAREU EH416", note: null, branchScope: "Tiger X", featured: false, description: descriptions.vip },
 
   // Tiger 2 - Quảng Tiến
