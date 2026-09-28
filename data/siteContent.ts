@@ -11,7 +11,6 @@ export const navigation: NavigationItem[] = [
   { label: "Khuyến mãi", href: "#khuyen-mai" },
   { label: "Bảng giá", href: "#bang-gia" },
   { label: "Giải đấu", href: "#giai-dau" },
-  { label: "Cấu hình", href: "#cau-hinh" },
   { label: "Cộng đồng", href: "#cong-dong" },
 ];
 

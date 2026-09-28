@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteContent } from "@/app/admin/actions";
+import { SubmitButton } from "./SubmitButton";
 
 interface DeleteContentButtonProps {
   resource: string;
@@ -20,7 +21,7 @@ export function DeleteContentButton({ resource, id, returnTo }: DeleteContentBut
       <input type="hidden" name="resource" value={resource} />
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="return_to" value={returnTo} />
-      <button className="min-h-10 rounded-lg border border-red-500/20 px-3 text-xs font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300">Xóa nội dung này</button>
+      <SubmitButton label="Xóa nội dung này" pendingLabel="Đang xóa..." className="min-h-10 rounded-lg border border-red-500/20 px-3 text-xs font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300" />
     </form>
   );
 }

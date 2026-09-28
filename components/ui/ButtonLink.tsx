@@ -11,7 +11,7 @@ interface ButtonLinkProps {
 export function ButtonLink({ href, children, variant = "primary", external = false, className = "" }: ButtonLinkProps) {
   const styles = variant === "primary"
     ? "bg-gradient-to-r from-tiger-red to-tiger-orange text-white shadow-glow hover:brightness-110"
-    : "border border-white/20 bg-white/5 text-white hover:border-tiger-orange/70 hover:bg-white/10";
+    : "border border-white/25 bg-white/[0.06] text-white hover:border-tiger-orange hover:bg-tiger-orange/10 hover:shadow-[0_0_24px_-6px_rgba(255,106,0,0.5)]";
 
   return (
     <a

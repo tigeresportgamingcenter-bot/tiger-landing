@@ -11,10 +11,15 @@ body { background: #070707; color: #f4f4f5; font-family: var(--font-be-vietnam-p
   .text-gradient { background: linear-gradient(100deg, #ef2b23, #ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .section-space { @apply py-20 sm:py-28; }
   .hero-grid { background-color: #070707; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 52px 52px; }
+  .section-glow { position: relative; isolation: isolate; }
+  .section-glow::before { content: ""; position: absolute; inset: 0; z-index: -1; background-image: radial-gradient(circle at 12% 15%, rgba(255,106,0,0.09), transparent 32%), radial-gradient(circle at 88% 85%, rgba(239,43,35,0.09), transparent 34%); }
+  .section-glow-alt::before { background-image: radial-gradient(circle at 90% 10%, rgba(255,106,0,0.09), transparent 32%), radial-gradient(circle at 8% 90%, rgba(239,43,35,0.08), transparent 34%); }
 }
 
 @layer components {
   .card-action { @apply inline-flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-bold text-zinc-300 transition hover:border-tiger-orange/60 hover:text-white; }
+  .accent-bar { @apply h-[3px] w-12 rounded-full bg-gradient-to-r from-tiger-red to-tiger-orange; }
+  .card-glow-hover { @apply transition duration-300 hover:border-tiger-orange/50 hover:shadow-[0_24px_48px_-28px_rgba(239,43,35,0.55)]; }
   .icon-action { @apply grid size-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition hover:border-tiger-orange/60 hover:text-white; }
   .section-reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s cubic-bezier(.22,1,.36,1); }
   .section-reveal.is-visible { opacity: 1; transform: translateY(0); }

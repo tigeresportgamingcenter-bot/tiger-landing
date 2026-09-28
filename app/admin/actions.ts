@@ -6,45 +6,10 @@ import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items"] as const;
+const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "pricing_plans", "faq_items"] as const;
 type Resource = (typeof resources)[number];
 const buckets = ["hero", "branches", "community", "hall-of-fame", "members"] as const;
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
-const allowedVideoTypes = ["video/mp4", "video/webm"] as const;
-
-function imageBucket(resource: Resource, formData: FormData) {
-  if (resource === "branches") return "branches";
-  if (resource === "tournaments") return "hall-of-fame";
-  if (resource === "hall_of_fame_members") return "members";
-  if (resource === "promotions") return "community";
-  if (resource === "gallery_items") return text(formData, "bucket");
-  if (resource === "site_images") return "hero";
-  return null;
-}
-
-async function uploadResourceMedia(supabase: Awaited<ReturnType<typeof requireAdmin>>, resource: Resource, formData: FormData) {
-  const uploaded: Array<{ bucket: string; objectPath: string }> = [];
-  const fields = ["image_url", "public_url", "poster_url", "video_url"] as const;
-  for (const field of fields) {
-    const file = formData.get(`${field}_file`);
-    if (!(file instanceof File) || file.size === 0) continue;
-    const isVideo = field === "video_url";
-    const bucket = isVideo ? "videos" : imageBucket(resource, formData);
-    if (!bucket || (!isVideo && !buckets.includes(bucket as (typeof buckets)[number]))) throw new Error("invalid-media-bucket");
-    const videoLimit = resource === "site_images" ? 12 : 25;
-    if (isVideo && (!allowedVideoTypes.includes(file.type as (typeof allowedVideoTypes)[number]) || file.size > videoLimit * 1024 * 1024)) throw new Error("invalid-video");
-    if (!isVideo && (!allowedImageTypes.includes(file.type as (typeof allowedImageTypes)[number]) || file.size > 5 * 1024 * 1024)) throw new Error("invalid-image");
-    const extension = file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : file.type === "video/mp4" ? "mp4" : file.type === "video/webm" ? "webm" : "webp";
-    const objectPath = `${resource}/${field}/${Date.now()}-${randomUUID()}.${extension}`;
-    const { error } = await supabase.storage.from(bucket).upload(objectPath, file, { contentType: file.type, upsert: false });
-    if (error) throw new Error(error.message);
-    const { data } = supabase.storage.from(bucket).getPublicUrl(objectPath);
-    formData.set(field, data.publicUrl);
-    if (isVideo) formData.set("video_provider", "upload");
-    uploaded.push({ bucket, objectPath });
-  }
-  return uploaded;
-}
 
 function text(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -178,6 +143,13 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
   }
   if (resource === "site_images") return { ...common, image_key: text(formData, "image_key"), media_type: text(formData, "media_type") === "video" ? "video" : "image", bucket: text(formData, "bucket") ?? "hero", object_path: text(formData, "object_path"), public_url: text(formData, "public_url"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), alt_text: text(formData, "alt_text") };
   if (resource === "pc_tiers") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), subtitle: text(formData, "subtitle"), cpu: text(formData, "cpu"), gpu: text(formData, "gpu"), ram: text(formData, "ram"), monitor: text(formData, "monitor"), mainboard: text(formData, "mainboard"), storage: text(formData, "storage"), peripherals: text(formData, "peripherals"), note: text(formData, "note"), branch_scope: text(formData, "branch_scope"), sort_order: Number(text(formData, "sort_order") ?? 0), featured: checked(formData, "featured") };
+  if (resource === "pricing_plans") {
+    const pricePerHour = Number(text(formData, "price_per_hour") ?? 0);
+    if (!(pricePerHour > 0)) throw new Error("invalid-price-per-hour");
+    const nightComboPrice = numberOrNull(formData, "night_combo_price");
+    if (nightComboPrice !== null && nightComboPrice < 0) throw new Error("invalid-night-combo-price");
+    return { ...common, slug: text(formData, "slug"), tier: text(formData, "tier"), price_per_hour: pricePerHour, night_combo_price: nightComboPrice, note: text(formData, "note") ?? "", branch_scope: text(formData, "branch_scope"), sort_order: Number(text(formData, "sort_order") ?? 0), featured: checked(formData, "featured") };
+  }
   if (resource === "faq_items") return { ...common, question: text(formData, "question"), answer: text(formData, "answer"), sort_order: Number(text(formData, "sort_order") ?? 0) };
   const mediaType = text(formData, "media_type") === "video" ? "video" : "image";
   const imageUrl = text(formData, "image_url");
@@ -192,25 +164,19 @@ export async function saveContent(formData: FormData) {
   if (!resource || !resources.includes(resource)) return;
   const supabase = await requireAdmin();
   const id = text(formData, "id");
-  let uploadedMedia: Array<{ bucket: string; objectPath: string }> = [];
   let payload: Record<string, unknown>;
   let promotionTiers: ReturnType<typeof promotionTierPayload> = [];
   try {
-    uploadedMedia = await uploadResourceMedia(supabase, resource, formData);
     payload = buildPayload(resource, formData);
     promotionTiers = resource === "promotions" && promotionType(formData) === "topup_bonus" ? promotionTierPayload(formData) : [];
   } catch (error) {
-    await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
     redirect(dashboardReturn(formData, "saved", error instanceof Error ? error.message : "validation"));
   }
   if (resource === "promotions") {
     const { data, error } = id
       ? await supabase.from(resource).update(payload).eq("id", id).select("id").single()
       : await supabase.from(resource).insert(payload).select("id").single();
-    if (error) {
-      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-      redirect(dashboardReturn(formData, "saved", error.message));
-    }
+    if (error) redirect(dashboardReturn(formData, "saved", error.message));
     const promotionId = data?.id ?? id;
     if (promotionId) {
       const { error: deleteTierError } = await supabase.from("promotion_tiers").delete().eq("promotion_id", promotionId);
@@ -234,10 +200,7 @@ export async function saveContent(formData: FormData) {
       .select("id, object_path, public_url")
       .eq("image_key", imageKey)
       .maybeSingle();
-    if (lookupError) {
-      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-      redirect(dashboardReturn(formData, "saved", lookupError.message));
-    }
+    if (lookupError) redirect(dashboardReturn(formData, "saved", lookupError.message));
 
     const mergedPayload = {
       ...payload,
@@ -248,10 +211,7 @@ export async function saveContent(formData: FormData) {
     const { error } = targetId
       ? await supabase.from("site_images").update(mergedPayload).eq("id", targetId)
       : await supabase.from("site_images").insert(mergedPayload);
-    if (error) {
-      await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-      redirect(dashboardReturn(formData, "saved", error.message));
-    }
+    if (error) redirect(dashboardReturn(formData, "saved", error.message));
     revalidatePath("/");
     revalidatePath("/admin/dashboard");
     redirect(dashboardReturn(formData, "saved"));
@@ -259,10 +219,7 @@ export async function saveContent(formData: FormData) {
 
   const query = id ? supabase.from(resource).update(payload).eq("id", id) : supabase.from(resource).insert(payload);
   const { error } = await query;
-  if (error) {
-    await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
-    redirect(dashboardReturn(formData, "saved", error.message));
-  }
+  if (error) redirect(dashboardReturn(formData, "saved", error.message));
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
   redirect(dashboardReturn(formData, "saved"));

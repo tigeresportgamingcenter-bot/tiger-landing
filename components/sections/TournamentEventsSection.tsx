@@ -29,10 +29,10 @@ function TournamentCard({ event, mode }: { event: TournamentEvent; mode: "upcomi
   const detailLabel = mode === "completed" ? "Xem tổng kết" : "Xem chi tiết";
 
   return (
-    <article className="min-w-[84vw] snap-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] sm:min-w-0">
+    <article className="card-glow-hover group min-w-[84vw] snap-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] sm:min-w-0">
       {visual ? (
-        <div className="relative aspect-[16/9]">
-          <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 84vw, (max-width: 1023px) 50vw, 33vw" className="object-cover" />
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 84vw, (max-width: 1023px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-[1.04]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
       ) : null}
@@ -67,7 +67,7 @@ export function TournamentEventsSection({ events }: { events: TournamentEvent[] 
   const visibleEvents = events.filter((event) => event.status !== "completed");
   if (!visibleEvents.length) return null;
   return (
-    <section className="section-space bg-black" id="giai-dau">
+    <section className="section-space section-glow bg-black" id="giai-dau">
       <Container>
         <SectionHeading eyebrow="Sự kiện Tiger" title="Giải đấu đang mở đăng ký" description="Theo dõi lịch thi đấu, trạng thái giải và đăng ký trực tiếp với Tiger Esports." />
         <div className="-mx-5 mt-9 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
@@ -83,7 +83,7 @@ export function CompletedTournamentsSection({ events }: { events: TournamentEven
   const completedEvents = events.filter((event) => event.status === "completed");
   if (!completedEvents.length) return null;
   return (
-    <section className="section-space bg-zinc-950" id="tong-ket-giai-dau">
+    <section className="section-space section-glow section-glow-alt bg-zinc-950" id="tong-ket-giai-dau">
       <Container>
         <SectionHeading eyebrow="Tổng kết Tiger" title="Giải đấu đã kết thúc" description="Xem lại các giải đã tổ chức, kết quả và video recap nếu đã được cập nhật." />
         <div className="-mx-5 mt-9 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">

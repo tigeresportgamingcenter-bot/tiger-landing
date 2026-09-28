@@ -25,8 +25,9 @@ export function SectionHeading({ eyebrow, title, description, centered = false }
 
   return (
     <div ref={ref} className={`section-reveal ${visible ? "is-visible" : ""} ${centered ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}`}>
+      <div className={`accent-bar mb-4 ${centered ? "mx-auto" : ""}`} />
       <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-tiger-orange">{eyebrow}</p>
-      <h2 className="text-3xl font-extrabold uppercase leading-tight text-white sm:text-4xl lg:text-5xl">{title}</h2>
+      <h2 className="text-3xl font-extrabold uppercase leading-tight text-white drop-shadow-[0_0_22px_rgba(255,106,0,0.18)] sm:text-4xl lg:text-5xl">{title}</h2>
       {description ? <p className="mt-4 leading-7 text-zinc-400">{description}</p> : null}
     </div>
   );
