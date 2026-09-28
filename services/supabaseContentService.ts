@@ -162,7 +162,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     supabase.from("hall_of_fame_members").select("*").eq("published", true).eq("verified", true).eq("consent_confirmed", true).order("created_at", { ascending: false }),
     supabase.from("site_images").select("*").eq("published", true).eq("verified", true),
     supabase.from("gallery_items").select("*").eq("published", true).eq("verified", true).order("sort_order"),
-    supabase.from("pc_tiers").select("*").eq("published", true).eq("verified", true).order("sort_order"),
+    supabase.from("pc_tiers").select("*").eq("published", true).eq("verified", true).order("branch_scope", { ascending: true, nullsFirst: true }).order("sort_order"),
     supabase.from("faq_items").select("*").eq("published", true).eq("verified", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("pricing_plans").select("*").eq("published", true).eq("verified", true).order("branch_scope", { ascending: true, nullsFirst: true }).order("sort_order"),
   ]);
