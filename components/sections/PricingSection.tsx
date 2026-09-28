@@ -1,4 +1,5 @@
 import { Check, Crown } from "lucide-react";
+import { BranchTabs } from "@/components/ui/BranchTabs";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -30,17 +31,13 @@ function PlanGrid({ items }: { items: PricingPlan[] }) {
 
 export function PricingSection({ pricing, actionHref }: { pricing: PricingPlan[]; actionHref: string }) {
   const groups = groupByBranch(pricing);
+  const tabGroups = groups.map((group) => ({ label: group.label ?? "Tất cả", content: <PlanGrid items={group.items} /> }));
   return (
     <section id="bang-gia" className="section-space bg-zinc-950">
       <Container>
         <SectionHeading eyebrow="Bảng giá tham chiếu" title="Chọn hạng máy, vào trận ngay" description="Mức giá linh hoạt cho từng nhu cầu chơi game và thi đấu." centered />
-        <div className="mt-10 space-y-10">
-          {groups.map((group) => (
-            <div key={group.label ?? "all"}>
-              {group.label ? <h3 className="mb-4 text-center text-sm font-bold uppercase tracking-widest text-tiger-orange">{group.label}</h3> : null}
-              <PlanGrid items={group.items} />
-            </div>
-          ))}
+        <div className="mt-10">
+          <BranchTabs groups={tabGroups} />
         </div>
         <div className="mt-8 flex flex-col items-center gap-5 text-center">
           <p className="max-w-2xl text-sm leading-6 text-zinc-500">Giá và combo có thể thay đổi theo từng cơ sở. Vui lòng liên hệ hotline để xác nhận trước khi đến.</p>

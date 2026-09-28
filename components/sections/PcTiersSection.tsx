@@ -1,4 +1,5 @@
 import { CircuitBoard, Cpu, HardDrive, MemoryStick, Monitor, Mouse, Video } from "lucide-react";
+import { BranchTabs } from "@/components/ui/BranchTabs";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { PcTier } from "@/types";
@@ -52,17 +53,13 @@ function TierGrid({ tiers }: { tiers: PcTier[] }) {
 
 export function PcTiersSection({ tiers }: { tiers: PcTier[] }) {
   const groups = groupByBranch(tiers);
+  const tabGroups = groups.map((group) => ({ label: group.label ?? "Tất cả", content: <TierGrid tiers={group.items} /> }));
   return (
     <section id="cau-hinh" className="section-space section-glow section-glow-alt bg-black">
       <Container>
         <SectionHeading eyebrow="Sức mạnh phần cứng" title="Cấu hình cho mọi trận chiến" description="Từ những trận rank giải trí tới đấu trường cạnh tranh, luôn có hạng máy phù hợp với bạn." centered />
-        <div className="mt-8 space-y-10">
-          {groups.map((group) => (
-            <div key={group.label ?? "all"}>
-              {group.label ? <h3 className="mb-4 text-center text-sm font-bold uppercase tracking-widest text-tiger-orange">{group.label}</h3> : null}
-              <TierGrid tiers={group.items} />
-            </div>
-          ))}
+        <div className="mt-8">
+          <BranchTabs groups={tabGroups} />
         </div>
         <p className="mt-6 text-center text-xs text-zinc-600">Cấu hình thực tế có thể khác nhau theo từng cơ sở.</p>
       </Container>
