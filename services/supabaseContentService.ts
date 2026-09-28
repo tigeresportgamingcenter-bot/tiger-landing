@@ -262,10 +262,12 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     if (typeof row.slug !== "string" || typeof row.tier !== "string") return [];
     const pricePerHour = Number(row.price_per_hour ?? 0);
     if (!(pricePerHour > 0)) return [];
+    const nightComboPrice = Number(row.night_combo_price ?? 0);
     return [{
       tierId: row.slug,
       tier: row.tier,
       pricePerHour,
+      nightComboPrice: nightComboPrice > 0 ? nightComboPrice : null,
       note: typeof row.note === "string" ? row.note : "",
       featured: Boolean(row.featured),
       branchScope: typeof row.branch_scope === "string" && row.branch_scope.trim() ? row.branch_scope : null,

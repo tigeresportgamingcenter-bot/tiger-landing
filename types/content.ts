@@ -54,6 +54,7 @@ export interface PricingPlan {
   tierId: string;
   tier: string;
   pricePerHour: number;
+  nightComboPrice: number | null;
   note: string;
   featured?: boolean;
   branchScope: string | null;

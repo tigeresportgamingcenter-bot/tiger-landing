@@ -3,6 +3,7 @@ create table if not exists public.pricing_plans (
   slug text unique not null,
   tier text not null,
   price_per_hour numeric not null default 0 check (price_per_hour >= 0),
+  night_combo_price numeric check (night_combo_price >= 0),
   note text not null default '',
   branch_scope text,
   sort_order integer not null default 0,

@@ -20,6 +20,7 @@ function PlanGrid({ items }: { items: PricingPlan[] }) {
           {plan.featured ? <span className="absolute right-4 top-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-300"><Crown className="size-3.5" /> Đỉnh cao</span> : null}
           <h3 className="text-xl font-extrabold uppercase text-white">{plan.tier}</h3>
           <div className="mt-6 flex items-end gap-1"><span className="text-3xl font-extrabold text-white">{formatPrice(plan.pricePerHour)}</span><span className="pb-1 text-sm text-zinc-500">/ giờ</span></div>
+          {plan.nightComboPrice ? <p className="mt-2 text-xs font-bold text-tiger-orange">Combo đêm: {formatPrice(plan.nightComboPrice)}</p> : null}
           <p className="mt-5 flex gap-2 text-sm leading-6 text-zinc-400"><Check className="mt-1 size-4 shrink-0 text-tiger-orange" />{plan.note}</p>
         </article>
       ))}
