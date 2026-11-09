@@ -3,6 +3,7 @@ import { saveContent } from "@/app/admin/actions";
 import { complaintStatusLabel } from "@/lib/complaints";
 import { DeleteContentButton } from "./DeleteContentButton";
 import { MediaUploadField } from "./MediaUploadField";
+import { adminButton, adminGhostButton, adminInput, adminLabel } from "./styles";
 
 export interface AdminField {
   name: string;
@@ -53,15 +54,21 @@ function recordStatus(record: Record<string, unknown>, resource: string) {
   return "Nháp";
 }
 
+function pillClass(label: string) {
+  if (label === "Mới tiếp nhận") return "bg-accent text-ground";
+  if (label === "Hết hạn" || label === "Đã từ chối") return "bg-red-500/20 text-red-200";
+  if (["Nổi bật", "Đang hiển thị", "Đang mở đăng ký", "Đã giải quyết"].includes(label)) return "bg-accent/20 text-[#e0c2ff]";
+  return "bg-white/10 text-zinc-200";
+}
+
 function Field({ field, record, resource }: { field: AdminField; record?: Record<string, unknown>; resource: string }) {
   const value = record?.[field.name];
-  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-accent";
 
   if (field.type === "readonly") {
     return (
       <div data-admin-field={field.name} className="md:col-span-2">
-        <p className="text-xs text-zinc-500">{field.label}</p>
-        <p className="mt-1 whitespace-pre-line rounded-lg bg-black/30 px-3 py-2 text-sm text-zinc-200">{String(value ?? "") || "—"}</p>
+        <p className={adminLabel}>{field.label}</p>
+        <p className="mt-1 whitespace-pre-line rounded-lg bg-ground px-3 py-3 text-base leading-7 text-zinc-100">{String(value ?? "") || "—"}</p>
       </div>
     );
   }
@@ -77,27 +84,27 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
   if (field.type === "promotion-tiers") {
     return (
       <div data-admin-field={field.name} className="md:col-span-2">
-        <p className="text-xs font-bold text-zinc-400">{field.label}</p>
-        <p className="mt-1 text-xs text-zinc-600">Dùng cho loại “Ưu đãi nạp tiền”. Bỏ trống toàn bộ dòng nếu chưa dùng.</p>
+        <p className={adminLabel}>{field.label}</p>
+        <p className="mt-1 text-[13px] text-zinc-400">Dùng cho loại “Ưu đãi nạp tiền”. Bỏ trống toàn bộ dòng nếu chưa dùng.</p>
         <div className="mt-3 space-y-3">
           {Array.from({ length: 8 }, (_, index) => {
             const row = index + 1;
             return (
-              <div key={row} className="grid gap-2 rounded-xl border border-white/10 bg-black/25 p-3 md:grid-cols-[1fr_1fr_1fr_1.4fr_0.7fr]">
-                <label className="text-[11px] text-zinc-500">Mức nạp
-                  <input name={`tier_${row}_pay_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_pay_amount`] ?? "")} className={`${className} mt-1`} />
+              <div key={row} className="grid gap-3 rounded-lg bg-ground/60 p-3 md:grid-cols-[1fr_1fr_1fr_1.4fr_0.7fr]">
+                <label className={adminLabel}>Mức nạp
+                  <input name={`tier_${row}_pay_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_pay_amount`] ?? "")} className={`${adminInput} mt-1`} />
                 </label>
-                <label className="text-[11px] text-zinc-500">Khách nhận
-                  <input name={`tier_${row}_receive_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_receive_amount`] ?? "")} className={`${className} mt-1`} />
+                <label className={adminLabel}>Khách nhận
+                  <input name={`tier_${row}_receive_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_receive_amount`] ?? "")} className={`${adminInput} mt-1`} />
                 </label>
-                <label className="text-[11px] text-zinc-500">Tặng thêm
-                  <input name={`tier_${row}_bonus_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_bonus_amount`] ?? "")} className={`${className} mt-1`} />
+                <label className={adminLabel}>Tặng thêm
+                  <input name={`tier_${row}_bonus_amount`} type="number" min="0" defaultValue={String(record?.[`tier_${row}_bonus_amount`] ?? "")} className={`${adminInput} mt-1`} />
                 </label>
-                <label className="text-[11px] text-zinc-500">Ghi chú
-                  <input name={`tier_${row}_note`} defaultValue={String(record?.[`tier_${row}_note`] ?? "")} className={`${className} mt-1`} />
+                <label className={adminLabel}>Ghi chú
+                  <input name={`tier_${row}_note`} defaultValue={String(record?.[`tier_${row}_note`] ?? "")} className={`${adminInput} mt-1`} />
                 </label>
-                <label className="text-[11px] text-zinc-500">Thứ tự
-                  <input name={`tier_${row}_sort_order`} type="number" defaultValue={String(record?.[`tier_${row}_sort_order`] ?? index)} className={`${className} mt-1`} />
+                <label className={adminLabel}>Thứ tự
+                  <input name={`tier_${row}_sort_order`} type="number" defaultValue={String(record?.[`tier_${row}_sort_order`] ?? index)} className={`${adminInput} mt-1`} />
                 </label>
               </div>
             );
@@ -109,8 +116,8 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   if (field.type === "checkbox") {
     return (
-      <label data-admin-field={field.name} className="flex min-h-11 items-center gap-2 text-sm text-zinc-300">
-        <input type="checkbox" name={field.name} defaultChecked={Boolean(value)} className="size-4 accent-violet-500" />
+      <label data-admin-field={field.name} className="flex min-h-11 items-center gap-3 text-base text-zinc-200">
+        <input type="checkbox" name={field.name} defaultChecked={Boolean(value)} className="size-5 accent-violet-500" />
         {field.label}
       </label>
     );
@@ -118,18 +125,18 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   if (field.type === "textarea") {
     return (
-      <label data-admin-field={field.name} className="text-xs text-zinc-500 md:col-span-2">
+      <label data-admin-field={field.name} className={`${adminLabel} md:col-span-2`}>
         {field.label}
-        <textarea name={field.name} defaultValue={typeof value === "string" ? value : ""} required={field.required} rows={3} className={`${className} mt-1 py-2`} />
+        <textarea name={field.name} defaultValue={typeof value === "string" ? value : ""} required={field.required} rows={4} className={`${adminInput} mt-1 py-3`} />
       </label>
     );
   }
 
   if (field.type === "select") {
     return (
-      <label data-admin-field={field.name} className="text-xs text-zinc-500">
+      <label data-admin-field={field.name} className={adminLabel}>
         {field.label}
-        <select name={field.name} defaultValue={String(value ?? (typeof field.options?.[0] === "string" ? field.options[0] : field.options?.[0]?.value) ?? "")} className={`${className} mt-1`}>
+        <select name={field.name} defaultValue={String(value ?? (typeof field.options?.[0] === "string" ? field.options[0] : field.options?.[0]?.value) ?? "")} className={`${adminInput} mt-1`}>
           {field.options?.map((option) => {
             const value = typeof option === "string" ? option : option.value;
             const label = typeof option === "string" ? option : option.label;
@@ -142,9 +149,9 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
 
   const inputValue = field.type === "datetime-local" && typeof value === "string" ? value.slice(0, 16) : String(value ?? "");
   return (
-    <label data-admin-field={field.name} className="text-xs text-zinc-500">
+    <label data-admin-field={field.name} className={adminLabel}>
       {field.label}
-      <input name={field.name} type={field.type ?? "text"} defaultValue={inputValue} required={field.required} className={`${className} mt-1`} />
+      <input name={field.name} type={field.type ?? "text"} defaultValue={inputValue} required={field.required} className={`${adminInput} mt-1`} />
     </label>
   );
 }
@@ -159,7 +166,7 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
   const orderedGroups: Array<NonNullable<AdminField["group"]>> = ["main", "media", "details", "status"];
 
   return (
-    <form action={saveContent} className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+    <form action={saveContent} className="space-y-3">
       <input type="hidden" name="resource" value={resource} />
       <input type="hidden" name="return_to" value={returnTo} />
       {record?.id ? <input type="hidden" name="id" value={String(record.id)} /> : null}
@@ -167,9 +174,9 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
         const groupFields = groupedFields[group];
         if (!groupFields?.length) return null;
         return (
-          <details key={group} open={index === 0} className="rounded-xl border border-white/10 bg-black/25 p-4">
-            <summary className="cursor-pointer text-sm font-extrabold text-white">{groupLabels[group]}</summary>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <details key={group} open={index === 0} className="rounded-xl bg-panel p-4 sm:p-5">
+            <summary className="cursor-pointer py-1 text-lg font-extrabold text-white">{groupLabels[group]}</summary>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
               {groupFields.map((field) => <Field key={field.name} field={field} record={record} resource={resource} />)}
             </div>
           </details>
@@ -195,9 +202,9 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
           }}
         />
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <button className="min-h-11 rounded-lg bg-gradient-to-r from-accent to-accent px-5 text-sm font-bold text-white">{record ? "Lưu thay đổi" : "Tạo mới"}</button>
-        <Link href={returnTo} className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 text-sm font-bold text-white">Hủy</Link>
+      <div className="flex flex-wrap gap-3 pt-1">
+        <button className={adminButton}>{record ? "Lưu thay đổi" : "Tạo mới"}</button>
+        <Link href={returnTo} className={adminGhostButton}>Hủy</Link>
       </div>
     </form>
   );
@@ -211,38 +218,39 @@ export function ResourceManager({ title, resource, fields, records, moduleHref, 
     <section className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-white">{title}</h2>
-          {note ? <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">{note}</p> : null}
+          <h2 className="font-display text-4xl uppercase leading-none text-white">{title}</h2>
+          {note ? <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-300">{note}</p> : null}
         </div>
-        {resource === "complaints" ? null : <Link href={`${moduleHref}&edit=new`} className="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-bold text-ground">Tạo mới</Link>}
+        {resource === "complaints" ? null : <Link href={`${moduleHref}&edit=new`} className={adminButton}>Tạo mới</Link>}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.25fr]">
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025]">
-          <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-zinc-500">
+        <div className="overflow-hidden rounded-xl bg-panel self-start">
+          <div className="grid grid-cols-[1fr_auto] gap-3 px-5 py-4 text-[13px] font-bold uppercase tracking-wider text-zinc-400">
             <span>Danh sách ({records.length})</span>
             <span>Trạng thái</span>
           </div>
-          <div className="max-h-[640px] overflow-y-auto">
+          <div className="max-h-[640px] space-y-1 overflow-y-auto px-2 pb-2">
             {records.map((record) => {
               const isSelected = selectedRecord?.id === record.id;
               const href = `${moduleHref}&edit=${String(record.id)}`;
+              const status = recordStatus(record, resource);
               return (
-                <div key={String(record.id)} className={`grid grid-cols-[1fr_auto] items-center gap-3 border-b border-white/5 px-4 py-3 ${isSelected ? "bg-accent/10" : ""}`}>
-                  <div>
-                    <Link href={href} className="font-semibold text-zinc-100 hover:text-accent">{recordLabel(record)}</Link>
-                    <p className="mt-1 text-xs text-zinc-600">{String(record.slug ?? record.image_key ?? record.id)}</p>
+                <div key={String(record.id)} className={`grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg px-3 py-3 transition-colors ${isSelected ? "bg-accent/15" : "hover:bg-white/5"}`}>
+                  <div className="min-w-0">
+                    <Link href={href} className="block break-words text-base font-semibold text-zinc-100 hover:text-accent">{recordLabel(record)}</Link>
+                    <p className="mt-1 truncate text-[13px] text-zinc-400">{String(record.slug ?? record.image_key ?? record.id)}</p>
                   </div>
-                  <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-bold text-zinc-400">{recordStatus(record, resource)}</span>
+                  <span className={`whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-bold ${pillClass(status)}`}>{status}</span>
                 </div>
               );
             })}
-            {!records.length ? <p className="p-5 text-sm text-zinc-500">Chưa có bản ghi phù hợp.</p> : null}
+            {!records.length ? <p className="p-4 text-base text-zinc-300">Chưa có bản ghi phù hợp.</p> : null}
           </div>
         </div>
 
         <div>
-          <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-zinc-400">{formRecord ? `Sửa: ${recordLabel(formRecord)}` : "Tạo bản ghi mới"}</h3>
+          <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wider text-zinc-300">{formRecord ? `Sửa: ${recordLabel(formRecord)}` : "Tạo bản ghi mới"}</h3>
           <Editor resource={resource} fields={fields} record={formRecord} returnTo={returnTo} />
           {formRecord?.id ? <DeleteContentButton resource={resource} id={String(formRecord.id)} returnTo={returnTo} /> : null}
         </div>

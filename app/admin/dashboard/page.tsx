@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { logout, uploadImage } from "@/app/admin/actions";
+import { uploadImage } from "@/app/admin/actions";
+import { AdminHeader, AdminNav, AdminNotice, FilterBar, OverviewGrid, type AdminModule } from "@/components/admin/AdminShell";
 import { ResourceManager, type AdminField } from "@/components/admin/ResourceManager";
+import { adminButton, adminInput } from "@/components/admin/styles";
 import { complaintCategoryLabel, complaintStatuses } from "@/lib/complaints";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -46,7 +47,7 @@ const complaintFields: AdminField[] = [
   { name: "internal_note", label: "Ghi chú nội bộ (khách không thấy)", type: "textarea", group: "details" },
 ];
 
-const modules: Array<{ key: ModuleKey; label: string; resource?: string; title: string }> = [
+const modules: Array<AdminModule & { key: ModuleKey }> = [
   { key: "overview", label: "Tổng quan", title: "Tổng quan" },
   { key: "media", label: "Ảnh & Media", resource: "site_images", title: "Ảnh website" },
   { key: "branches", label: "Cơ sở", resource: "branches", title: "Cơ sở" },
@@ -178,79 +179,51 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const records = resource ? filterRecords(normalizeRecords(resource, data[resource as keyof typeof data] ?? [], (promotionTiers ?? []) as Row[]), resource, q, filter) : [];
 
+  const badges = { complaints: data.complaints.filter((record) => (record.status ?? "new") === "new").length };
+  const overviewItems = modules.filter((module) => module.resource).map((module) => ({
+    key: module.key,
+    label: module.label,
+    count: data[module.resource as keyof typeof data]?.length ?? 0,
+    pending: module.key === "complaints" ? badges.complaints : 0,
+  }));
+
   return (
-    <main className="min-h-screen bg-ground px-4 py-6 text-white sm:px-6">
+    <main className="min-h-screen bg-ground px-4 pb-16 pt-6 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-accent">Tiger Esports CMS</p>
-            <h1 className="mt-2 text-3xl font-extrabold">Dashboard nội dung</h1>
-            <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
-          </div>
-          <form action={logout}><button className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-bold">Đăng xuất</button></form>
-        </header>
+        <AdminHeader email={user.email} />
 
-        {visibleError || loadError ? <p className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</p> : null}
-        {faqNeedsMigration ? <p className="mt-5 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm leading-6 text-amber-200">Module FAQ chưa được kích hoạt trên Supabase. Chạy migration <code>20260701_faq_admin_cms.sql</code> trong SQL Editor, sau đó tải lại trang.</p> : null}
-        {leaderboardNeedsMigration ? <p className="mt-5 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm leading-6 text-amber-200">Module Xếp hạng chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_lol_game_and_leaderboard.sql</code> trong SQL Editor, sau đó tải lại trang.</p> : null}
-        {complaintsNeedMigration ? <p className="mt-5 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm leading-6 text-amber-200">Module Khiếu nại chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_complaints.sql</code> trong SQL Editor, sau đó tải lại trang.</p> : null}
-        {successMessage ? <p className="mt-5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">{successMessage}</p> : null}
+        {visibleError || loadError ? <AdminNotice tone="error">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</AdminNotice> : null}
+        {faqNeedsMigration ? <AdminNotice tone="warning">Module FAQ chưa được kích hoạt trên Supabase. Chạy migration <code>20260701_faq_admin_cms.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
+        {leaderboardNeedsMigration ? <AdminNotice tone="warning">Module Xếp hạng chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_lol_game_and_leaderboard.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
+        {complaintsNeedMigration ? <AdminNotice tone="warning">Module Khiếu nại chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_complaints.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
+        {successMessage ? <AdminNotice tone="success">{successMessage}</AdminNotice> : null}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
-          <aside className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 lg:sticky lg:top-4 lg:self-start">
-            <nav className="grid gap-1">
-              {modules.map((module) => (
-                <Link key={module.key} href={`/admin/dashboard?module=${module.key}`} className={`rounded-xl px-3 py-2 text-sm font-bold ${activeModule === module.key ? "bg-accent text-white" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}>
-                  {module.label}
-                </Link>
-              ))}
-            </nav>
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+          <aside className="min-w-0 lg:sticky lg:top-4 lg:self-start">
+            <AdminNav modules={modules} active={activeModule} badges={badges} />
           </aside>
 
-          <section className="space-y-5">
-            {activeModule === "overview" ? (
-              <div className="grid gap-4 md:grid-cols-3">
-                {modules.filter((module) => module.resource).map((module) => {
-                  const count = data[module.resource as keyof typeof data]?.length ?? 0;
-                  return <Link key={module.key} href={`/admin/dashboard?module=${module.key}`} className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 hover:border-accent/50"><p className="text-sm text-zinc-500">{module.label}</p><p className="mt-3 text-3xl font-extrabold text-white">{count}</p></Link>;
-                })}
-              </div>
-            ) : null}
+          <section className="min-w-0 space-y-5">
+            {activeModule === "overview" ? <OverviewGrid items={overviewItems} /> : null}
 
             {activeModule === "media" ? (
-              <section className="rounded-2xl border border-accent/25 bg-accent/5 p-5">
-                <h2 className="text-2xl font-extrabold">Upload ảnh website</h2>
-                <p className="mt-2 text-sm text-zinc-500">Dùng cho hero/community/branch/member. Khuyến nghị video hero MP4/WebM public URL từ Supabase Storage, dài 5–12 giây và tắt âm. Media mới luôn ở trạng thái chưa xuất bản.</p>
+              <section className="rounded-xl bg-panel p-5 sm:p-6">
+                <h2 className="font-display text-3xl uppercase text-white">Upload ảnh website</h2>
+                <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-300">Dùng cho hero/community/branch/member. Khuyến nghị video hero MP4/WebM public URL từ Supabase Storage, dài 5–12 giây và tắt âm. Media mới luôn ở trạng thái chưa xuất bản.</p>
                 <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
                   <input type="hidden" name="return_to" value={returnTo} />
-                  <select name="bucket" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3"><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
-                  <input name="image_key" placeholder="Khóa ảnh, ví dụ hero-main" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
-                  <input name="alt_text" placeholder="Mô tả ảnh" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 px-3" />
-                  <input name="file" type="file" accept="image/jpeg,image/png,image/webp" required className="min-h-11 rounded-lg border border-white/10 bg-black/50 p-2" />
-                  <button className="min-h-11 rounded-lg bg-accent font-bold md:col-span-2">Upload lên Storage</button>
+                  <select name="bucket" required aria-label="Bucket" className={adminInput}><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
+                  <input name="image_key" placeholder="Khóa ảnh, ví dụ hero-main" aria-label="Khóa ảnh" required className={adminInput} />
+                  <input name="alt_text" placeholder="Mô tả ảnh" aria-label="Mô tả ảnh" required className={adminInput} />
+                  <input name="file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="File ảnh" required className={`${adminInput} py-2.5`} />
+                  <button className={`${adminButton} md:col-span-2`}>Upload lên Storage</button>
                 </form>
               </section>
             ) : null}
 
             {resource && !faqNeedsMigration && !leaderboardNeedsMigration && !complaintsNeedMigration ? (
               <>
-                <form className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 md:grid-cols-[1fr_180px_auto]">
-                  <input type="hidden" name="module" value={activeModule} />
-                  <input name="q" defaultValue={q} placeholder="Tìm theo tên, slug..." className="min-h-11 rounded-lg border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-accent" />
-                  <select name="filter" defaultValue={filter} className="min-h-11 rounded-lg border border-white/10 bg-black/40 px-3 text-sm outline-none focus:border-accent">
-                    <option value="all">Tất cả trạng thái</option>
-                    <option value="draft">Nháp</option>
-                    <option value="verified">Đã xác minh</option>
-                    <option value="published">Đang hiển thị</option>
-                    <option value="featured">Nổi bật</option>
-                    <option value="registration_open">Mở đăng ký</option>
-                    <option value="completed">Đã kết thúc</option>
-                    <option value="new">Khiếu nại mới</option>
-                    <option value="in_progress">Khiếu nại đang xử lý</option>
-                    <option value="resolved">Khiếu nại đã giải quyết</option>
-                  </select>
-                  <button className="min-h-11 rounded-lg border border-white/15 px-4 text-sm font-bold">Lọc</button>
-                </form>
+                <FilterBar module={activeModule} q={q} filter={filter} />
                 <ResourceManager
                   title={currentModule.title}
                   resource={resource}
@@ -260,6 +233,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   returnTo={returnTo}
                   selectedId={selectedEdit}
                   note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Chọn đúng loại chương trình. Combo dùng Giá combo + Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp, không nhập JSON và không dùng nhãn Giá." : resource === "site_images" ? "Hero đầu trang dùng khóa hero-main. Chọn Ảnh hoặc Video; video nên là MP4/WebM 5–12 giây, tắt âm và có poster/ảnh fallback." : resource === "faq_items" ? "Mỗi bản ghi là một câu hỏi và câu trả lời. Chỉ nội dung đã xác minh và đang hiển thị mới xuất hiện ngoài website." : undefined}
+               
                 />
               </>
             ) : null}

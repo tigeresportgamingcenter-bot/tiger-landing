@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useId, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { adminInput, adminLabel } from "./styles";
 
 const imageBuckets = ["hero", "branches", "community", "hall-of-fame", "members"] as const;
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -48,7 +49,6 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
   const [url, setUrl] = useState(currentUrl);
   const [status, setStatus] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-accent";
   const isImage = kind === "image";
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -89,10 +89,10 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
   }
 
   return (
-    <label className="text-xs text-zinc-500 md:col-span-2" htmlFor={inputId}>
+    <label className={`${adminLabel} md:col-span-2`} htmlFor={inputId}>
       {label}
       {isImage && url ? (
-        <span className="relative mt-2 block aspect-[16/7] max-w-md overflow-hidden rounded-lg border border-white/10">
+        <span className="relative mt-2 block aspect-[16/7] max-w-md overflow-hidden rounded-lg bg-ground">
           <Image src={url} alt="Ảnh hiện tại" fill sizes="448px" className="object-cover" />
         </span>
       ) : null}
@@ -104,19 +104,19 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
         onChange={(event) => setUrl(event.target.value)}
         required={required && !url}
         placeholder={isImage ? "Dán URL ảnh hoặc upload file bên dưới" : "YouTube, Facebook hoặc URL video ngoài"}
-        className={`${className} mt-2`}
+        className={`${adminInput} mt-2`}
       />
       <input
         type="file"
         accept={isImage ? "image/jpeg,image/png,image/webp" : "video/mp4,video/webm"}
         disabled={isUploading}
         onChange={handleFileChange}
-        className={`${className} mt-2 h-auto py-2 file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-xs file:font-bold file:text-white disabled:cursor-not-allowed disabled:opacity-60`}
+        className={`${adminInput} mt-2 h-auto py-2.5 file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-sm file:font-bold file:text-ground disabled:cursor-not-allowed disabled:opacity-60`}
       />
-      <span className="mt-1 block text-[11px] text-zinc-600">
+      <span className="mt-1 block text-[13px] font-normal text-zinc-400">
         {isImage ? "JPEG, PNG hoặc WebP, tối đa 5MB." : `MP4 hoặc WebM, tối đa ${resource === "site_images" ? 12 : 25}MB. File được upload trực tiếp lên Supabase, không đi qua Vercel.`}
       </span>
-      {status ? <span className="mt-1 block text-[11px] text-violet-300">{status}</span> : null}
+      {status ? <span className="mt-1 block text-[13px] font-normal text-[#d9b3ff]" role="status">{status}</span> : null}
     </label>
   );
 }
