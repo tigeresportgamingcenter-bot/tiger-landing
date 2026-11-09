@@ -36,11 +36,11 @@ export function HeroMedia({ mediaType, image, video }: HeroMediaProps) {
         loop
         playsInline
         preload="metadata"
-        aria-label={fallbackImage?.alt ?? "Video không gian Tiger Esports"}
+        aria-hidden="true"
         onError={() => setVideoFailed(true)}
       />
     );
   }
 
-  return fallbackImage ? <Image src={fallbackImage.src} alt={fallbackImage.alt} fill priority quality={82} sizes="100vw" className="object-cover" /> : null;
+  return fallbackImage ? <Image src={fallbackImage.src} alt={fallbackImage.alt} fill priority quality={82} sizes="100vw" className="hero-zoom object-cover" /> : null;
 }

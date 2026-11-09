@@ -8,11 +8,11 @@ export const siteSettings: SiteSettings = {
 
 export const navigation: NavigationItem[] = [
   { label: "Cơ sở", href: "#co-so" },
-  { label: "Khuyến mãi", href: "#khuyen-mai" },
-  { label: "Bảng giá", href: "#bang-gia" },
-  { label: "Giải đấu", href: "#giai-dau" },
-  { label: "Cấu hình", href: "#cau-hinh" },
-  { label: "Cộng đồng", href: "#cong-dong" },
+  { label: "Giá và ưu đãi", href: "#bang-gia" },
+  { label: "Đấu trường", href: "#giai-dau" },
+  { label: "Xếp hạng", href: "#bang-xep-hang" },
+  { label: "Khiếu nại", href: "#khieu-nai" },
+  { label: "Liên hệ", href: "#lien-he" },
 ];
 
 export const heroContent: HeroContent = {
@@ -22,9 +22,10 @@ export const heroContent: HeroContent = {
   description: "Cyber Game cao cấp cho game thủ Thanh Hóa và Sầm Sơn.",
   supportingText: "Bốn cơ sở, nhiều hạng máy và giải đấu định kỳ.",
   readinessLabel: "Sẵn sàng cho trận đấu",
+  facts: ["Mở 24/7", "Màn hình tới 360Hz"],
   image: { src: "/images/hero/tiger-hero.webp", alt: "Không gian gaming tại Tiger Esports" },
-  mediaType: "image",
-  video: null,
+  mediaType: "video",
+  video: { src: "/videos/hero.mp4", provider: "upload", poster: { src: "/images/hero/tiger-hero.webp", alt: "Không gian gaming tại Tiger Esports" } },
 };
 
 export const communityImage: ContentImage = {
@@ -39,7 +40,7 @@ export const communityHighlights: CommunityHighlight[] = [
 
 export const contactContent: ContactContent = {
   eyebrow: "Sẵn sàng nhập cuộc?",
-  titleLines: ["Chọn cơ sở.", "Gọi Tiger.", "Vào trận."],
+  titleLines: ["Chọn cơ sở.", "Vào trận."],
   facebookLabel: "Fanpage chính thức",
   zaloLabel: "Nhắn Zalo 0834.650.555",
   mapsLabel: "Chọn cơ sở để chỉ đường",

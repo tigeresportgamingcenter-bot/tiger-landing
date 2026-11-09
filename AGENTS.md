@@ -14,7 +14,7 @@
 
 ## Thiết kế
 - Phong cách gaming cao cấp, hiện đại.
-- Tông màu chính: đen, đỏ, cam neon, trắng.
+- Tông màu chính: đen ngả tím (#0a0612), tím neon (#b44dff), trắng tím nhạt (#f3effc).
 - Giao diện sạch, không rối chữ.
 - Ưu tiên mobile-first.
 - Không lạm dụng hiệu ứng nặng.

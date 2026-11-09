@@ -4,9 +4,10 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { complaintStatuses } from "@/lib/complaints";
 import { createClient } from "@/lib/supabase/server";
 
-const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items"] as const;
+const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items", "leaderboard_entries", "complaints"] as const;
 type Resource = (typeof resources)[number];
 const buckets = ["hero", "branches", "community", "hall-of-fame", "members"] as const;
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -82,6 +83,15 @@ function promotionTierPayload(formData: FormData) {
     const bonusAmount = enteredBonusAmount !== null ? enteredBonusAmount : receiveAmount - payAmount;
     return { pay_amount: payAmount, receive_amount: receiveAmount, bonus_amount: bonusAmount, note, sort_order: sortOrder };
   }).filter((item): item is { pay_amount: number; receive_amount: number; bonus_amount: number; note: string | null; sort_order: number } => Boolean(item));
+}
+
+function normalizePeriodStart(value: string | null, period: "week" | "month") {
+  if (!value || !/^d{4}-d{2}-d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.valueOf())) return null;
+  if (period === "month") date.setUTCDate(1);
+  else date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return date.toISOString().slice(0, 10);
 }
 
 function dashboardReturn(formData: FormData, status: "saved" | "deleted" | "uploaded", error?: string) {
@@ -176,6 +186,22 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
     const honorMonth = text(formData, "honor_month");
     return { ...common, display_name: text(formData, "display_name"), tier: text(formData, "tier"), period_label: honorMonth ? `Tháng ${honorMonth.slice(5, 7)}/${honorMonth.slice(0, 4)}` : null, honor_month: honorMonth ? `${honorMonth}-01` : null, member_points: Math.max(0, Number(text(formData, "member_points") ?? 0)), note: text(formData, "note"), sort_order: Number(text(formData, "sort_order") ?? 0), image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), consent_confirmed: checked(formData, "consent_confirmed") };
   }
+  if (resource === "complaints") {
+    const status = text(formData, "status");
+    if (!complaintStatuses.some((item) => item.value === status)) throw new Error("invalid-complaint-status");
+    const publicResponse = text(formData, "public_response");
+    const closed = status === "resolved" || status === "rejected";
+    return { status, assigned_to: text(formData, "assigned_to"), internal_note: text(formData, "internal_note"), public_response: publicResponse, responded_at: publicResponse ? new Date().toISOString() : null, resolved_at: closed ? new Date().toISOString() : null };
+  }
+  if (resource === "leaderboard_entries") {
+    if (checked(formData, "published") && !checked(formData, "consent_confirmed")) throw new Error("member-consent-required");
+    const period = text(formData, "period_type") === "week" ? "week" : "month";
+    const periodStart = normalizePeriodStart(text(formData, "period_start"), period);
+    if (!periodStart) throw new Error("invalid-period-start");
+    const rank = Number(text(formData, "rank"));
+    if (!Number.isInteger(rank) || rank < 1 || rank > 5) throw new Error("invalid-leaderboard-rank");
+    return { ...common, branch_slug: text(formData, "branch_slug"), period_type: period, period_start: periodStart, rank, display_name: text(formData, "display_name"), points: Math.max(0, Number(text(formData, "points") ?? 0)), consent_confirmed: checked(formData, "consent_confirmed"), source: "manual" };
+  }
   if (resource === "site_images") return { ...common, image_key: text(formData, "image_key"), media_type: text(formData, "media_type") === "video" ? "video" : "image", bucket: text(formData, "bucket") ?? "hero", object_path: text(formData, "object_path"), public_url: text(formData, "public_url"), video_url: text(formData, "video_url"), video_provider: text(formData, "video_url") ? videoProvider(formData) : null, poster_url: text(formData, "poster_url"), alt_text: text(formData, "alt_text") };
   if (resource === "pc_tiers") return { ...common, slug: text(formData, "slug"), name: text(formData, "name"), subtitle: text(formData, "subtitle"), cpu: text(formData, "cpu"), gpu: text(formData, "gpu"), ram: text(formData, "ram"), monitor: text(formData, "monitor"), mainboard: text(formData, "mainboard"), storage: text(formData, "storage"), peripherals: text(formData, "peripherals"), note: text(formData, "note"), branch_scope: text(formData, "branch_scope"), sort_order: Number(text(formData, "sort_order") ?? 0), featured: checked(formData, "featured") };
   if (resource === "faq_items") return { ...common, question: text(formData, "question"), answer: text(formData, "answer"), sort_order: Number(text(formData, "sort_order") ?? 0) };
@@ -192,6 +218,7 @@ export async function saveContent(formData: FormData) {
   if (!resource || !resources.includes(resource)) return;
   const supabase = await requireAdmin();
   const id = text(formData, "id");
+  if (resource === "complaints" && !id) redirect(dashboardReturn(formData, "saved", "complaint-create-blocked"));
   let uploadedMedia: Array<{ bucket: string; objectPath: string }> = [];
   let payload: Record<string, unknown>;
   let promotionTiers: ReturnType<typeof promotionTierPayload> = [];

@@ -91,7 +91,8 @@ export interface Tournament {
   description: string;
 }
 
-export type SupportedGame = "FC Online" | "Valorant" | "TFT" | "AOE";
+export type SupportedGame = "FC Online" | "Valorant" | "TFT" | "AOE" | "LoL";
+export type LeaderboardPeriod = "week" | "month";
 export type TournamentStatus = "upcoming" | "registration_open" | "ongoing" | "completed";
 export type HallOfFameStatus = "verified" | "placeholder";
 export type MemberTier = "Diamond" | "Platinum" | "Gold";
@@ -113,6 +114,16 @@ export interface HallOfFameTournament {
   image: ContentImage | null;
   video: ContentVideo | null;
   showInHallOfFame: boolean;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  branchId: string;
+  period: LeaderboardPeriod;
+  periodStart: string;
+  rank: number;
+  displayName: string;
+  points: number;
 }
 
 export interface HonoredMember {
@@ -195,6 +206,7 @@ export interface HeroContent {
   description: string;
   supportingText: string;
   readinessLabel: string;
+  facts: string[];
   image: ContentImage | null;
   mediaType: "image" | "video";
   video: ContentVideo | null;
@@ -238,6 +250,7 @@ export interface SiteContent {
   featuredPromotion: Promotion | null;
   communityImage: ContentImage | null;
   hallOfFame: HallOfFameContent;
+  leaderboard: LeaderboardEntry[];
   galleryItems: GalleryItem[];
   tournamentEvents: TournamentEvent[];
   completedTournamentEvents: TournamentEvent[];

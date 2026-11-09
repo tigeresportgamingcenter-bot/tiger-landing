@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import { supportedGames } from "@/lib/games";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
-import type { Branch, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
+import type { Branch, LeaderboardEntry, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
 
 export interface SupabaseContent {
   branches?: Branch[];
@@ -8,6 +9,7 @@ export interface SupabaseContent {
   upcomingPromotions?: Promotion[];
   tournaments?: Tournament[];
   hallOfFame?: HallOfFameContent;
+  leaderboard?: LeaderboardEntry[];
   heroImage?: ContentImage;
   heroMediaType?: "image" | "video";
   heroVideo?: ContentVideo;
@@ -20,12 +22,13 @@ export interface SupabaseContent {
   faqItems?: FaqItem[];
 }
 
-const games: SupportedGame[] = ["FC Online", "Valorant", "TFT", "AOE"];
+const games = supportedGames;
 const communityGameDescriptions: Record<SupportedGame, string> = {
   "FC Online": "Sân chơi bóng đá điện tử cho những trận giao hữu, leo rank và giải đấu cộng đồng.",
   Valorant: "Không gian đấu đội, phối hợp chiến thuật và rèn kỹ năng FPS cùng đồng đội.",
   TFT: "Cộng đồng chiến thuật dành cho người chơi Đấu Trường Chân Lý tại Tiger.",
   AOE: "Kết nối những game thủ chiến thuật yêu thích AOE và các kèo giao lưu địa phương.",
+  LoL: "Cộng đồng Liên Minh Huyền Thoại: ghép đội, luyện tập và tranh tài ngay tại quán.",
 };
 const memberTiers: MemberTier[] = ["Diamond", "Platinum", "Gold"];
 const tournamentStatuses: TournamentStatus[] = ["upcoming", "registration_open", "ongoing", "completed"];
@@ -153,7 +156,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const today = todayInVietnam();
 
-  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult] = await Promise.all([
+  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult, leaderboardResult] = await Promise.all([
     supabase.from("branches").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).or(`valid_from.is.null,valid_from.lte.${today}`).or(`valid_until.is.null,valid_until.gte.${today}`).order("featured", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).gt("valid_from", today).order("valid_from", { ascending: true }),
@@ -163,6 +166,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     supabase.from("gallery_items").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("pc_tiers").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("faq_items").select("*").eq("published", true).eq("verified", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
+    supabase.from("leaderboard_entries").select("*").eq("published", true).eq("verified", true).eq("consent_confirmed", true).order("period_start", { ascending: false }).order("rank", { ascending: true }),
   ]);
 
   const branches: Branch[] = (branchResult.error ? [] : branchResult.data ?? []).map((row) => ({
@@ -230,7 +234,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   }
   const heroRow = (imageResult.error ? [] : imageResult.data ?? []).find((row) => row.image_key === "hero-main");
   const heroVideo = heroRow ? safeVideo(heroRow.video_url, heroRow.video_provider, heroRow.poster_url, typeof heroRow.alt_text === "string" ? heroRow.alt_text : "Video không gian Tiger Esports") : null;
-  const heroMediaType = heroRow?.media_type === "video" && heroVideo ? "video" : "image";
+  const heroMediaType = heroRow ? (heroRow.media_type === "video" && heroVideo ? "video" : "image") : undefined;
 
   const galleryItems: GalleryItem[] = (galleryResult.error ? [] : galleryResult.data ?? []).flatMap((row) => {
     const mediaType = row.media_type === "video" ? "video" : "image";
@@ -261,6 +265,12 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     return [{ id: row.id, question: row.question.trim(), answer: row.answer.trim() }];
   });
 
+  const leaderboard: LeaderboardEntry[] = (leaderboardResult.error ? [] : leaderboardResult.data ?? []).flatMap((row) => {
+    const rank = Number(row.rank);
+    if ((row.period_type !== "week" && row.period_type !== "month") || typeof row.id !== "string" || typeof row.branch_slug !== "string" || typeof row.period_start !== "string" || typeof row.display_name !== "string" || !row.display_name.trim() || !Number.isInteger(rank) || rank < 1 || rank > 5) return [];
+    return [{ id: row.id, branchId: row.branch_slug, period: row.period_type, periodStart: row.period_start.slice(0, 10), rank, displayName: row.display_name.trim(), points: Math.max(0, Number(row.points ?? 0)) }];
+  });
+
   const statusPriority: Record<TournamentStatus, number> = { registration_open: 0, ongoing: 1, upcoming: 2, completed: 3 };
   const tournamentEvents = mappedEvents.filter((event) => event.status !== "completed").sort((a, b) => statusPriority[a.status] - statusPriority[b.status] || String(a.startsAt ?? a.heldOn ?? "").localeCompare(String(b.startsAt ?? b.heldOn ?? "")));
   const completedTournamentEvents = mappedEvents.filter((event) => event.status === "completed").sort((a, b) => String(b.heldOn ?? b.startsAt ?? "").localeCompare(String(a.heldOn ?? a.startsAt ?? "")));
@@ -271,6 +281,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     upcomingPromotions: upcomingPromotions.length ? upcomingPromotions : undefined,
     tournaments: tournaments.length ? tournaments : undefined,
     hallOfFame: { tournaments: hallTournaments, members, consentNotice: "Danh sách vinh danh theo từng tháng và chỉ hiển thị khi khách hàng đồng ý." },
+    leaderboard: leaderboard.length ? leaderboard : undefined,
     heroImage: images.get("hero-main"),
     heroMediaType,
     heroVideo: heroVideo ?? undefined,
