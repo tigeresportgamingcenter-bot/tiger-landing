@@ -48,7 +48,7 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
   const [url, setUrl] = useState(currentUrl);
   const [status, setStatus] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-tiger-orange";
+  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-accent";
   const isImage = kind === "image";
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -111,12 +111,12 @@ export function MediaUploadField({ name, label, kind, resource, currentUrl = "",
         accept={isImage ? "image/jpeg,image/png,image/webp" : "video/mp4,video/webm"}
         disabled={isUploading}
         onChange={handleFileChange}
-        className={`${className} mt-2 h-auto py-2 file:mr-3 file:rounded-md file:border-0 file:bg-tiger-orange file:px-3 file:py-2 file:text-xs file:font-bold file:text-white disabled:cursor-not-allowed disabled:opacity-60`}
+        className={`${className} mt-2 h-auto py-2 file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-xs file:font-bold file:text-white disabled:cursor-not-allowed disabled:opacity-60`}
       />
       <span className="mt-1 block text-[11px] text-zinc-600">
         {isImage ? "JPEG, PNG hoặc WebP, tối đa 5MB." : `MP4 hoặc WebM, tối đa ${resource === "site_images" ? 12 : 25}MB. File được upload trực tiếp lên Supabase, không đi qua Vercel.`}
       </span>
-      {status ? <span className="mt-1 block text-[11px] text-orange-300">{status}</span> : null}
+      {status ? <span className="mt-1 block text-[11px] text-violet-300">{status}</span> : null}
     </label>
   );
 }

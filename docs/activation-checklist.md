@@ -16,6 +16,8 @@ Chạy lần lượt trong Supabase SQL Editor:
 8. `supabase/migrations/20260630_phase2c_fix_promotion_price_nullable.sql`
 9. `supabase/migrations/20260701_hero_tournament_members_ux.sql`
 10. `supabase/migrations/20260701_faq_admin_cms.sql`
+11. `supabase/migrations/20261109_lol_game_and_leaderboard.sql` (thêm game LMHT và bảng xếp hạng tuần/tháng theo cơ sở)
+12. `supabase/migrations/20261109_complaints.sql` (hệ thống khiếu nại, hàm gửi và tra cứu)
 
 Migration cuối bổ sung hero video, các trường giải thưởng/thể thức và xếp hạng hội viên theo tháng. Không dùng `service_role` key trong ứng dụng hoặc Vercel.
 

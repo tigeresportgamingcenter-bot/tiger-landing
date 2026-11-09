@@ -8,6 +8,7 @@ import { promotions } from "@/data/promotions";
 import { socialLinks } from "@/data/socialLinks";
 import { tournaments } from "@/data/tournaments";
 import { communityHighlights, communityImage, contactContent, faqItems, heroContent, navigation, siteSettings } from "@/data/siteContent";
+import { isDemoEnabled } from "@/lib/demo";
 import type { ContentImage, SiteContent } from "@/types";
 import { getSupabaseContent, getSupabaseTournamentBySlug } from "./supabaseContentService";
 import type { TournamentEvent } from "@/types";
@@ -16,6 +17,12 @@ function getAvailableImage(image: ContentImage | null): ContentImage | null {
   if (!image) return null;
   const publicPath = join(process.cwd(), "public", image.src.replace(/^\//, ""));
   return existsSync(publicPath) ? image : null;
+}
+
+async function withOptionalDemo(content: SiteContent): Promise<SiteContent> {
+  if (!isDemoEnabled()) return content;
+  const { withDemoContent } = await import("@/data/demo");
+  return withDemoContent(content);
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
@@ -39,6 +46,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       tournaments: hallOfFame.tournaments.map((tournament) => ({ ...tournament, image: getAvailableImage(tournament.image) })),
       members: hallOfFame.members.map((member) => ({ ...member, image: getAvailableImage(member.image) })),
     },
+    leaderboard: [],
     galleryItems: [],
     tournamentEvents: [],
     completedTournamentEvents: [],
@@ -47,7 +55,7 @@ export async function getSiteContent(): Promise<SiteContent> {
 
   try {
     const remote = await getSupabaseContent();
-    if (!remote) return fallback;
+    if (!remote) return withOptionalDemo(fallback);
     const remotePromotions = remote.promotions ?? fallback.promotions;
     return {
       ...fallback,
@@ -64,6 +72,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       communityImage: remote.communityImage ?? fallback.communityImage,
       hallOfFame: remote.hallOfFame ?? fallback.hallOfFame,
       featuredPromotion: remote.featuredPromotion ?? remotePromotions.find((promotion) => promotion.featured) ?? fallback.featuredPromotion,
+      leaderboard: remote.leaderboard ?? fallback.leaderboard,
       galleryItems: remote.galleryItems ?? fallback.galleryItems,
       pcTiers: remote.pcTiers ?? fallback.pcTiers,
       tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
@@ -71,7 +80,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       faqItems: remote.faqItems ?? fallback.faqItems,
     };
   } catch {
-    return fallback;
+    return withOptionalDemo(fallback);
   }
 }
 
@@ -81,6 +90,11 @@ export async function getPublishedTournamentBySlug(slug: string): Promise<Tourna
     if (remote) return remote;
   } catch {
     // Static fallback below keeps public pages available.
+  }
+  if (isDemoEnabled()) {
+    const { demoTournaments } = await import("@/data/demo");
+    const demoTournament = demoTournaments.find((item) => item.slug === slug);
+    if (demoTournament) return demoTournament;
   }
   const staticTournament = hallOfFame.tournaments.find((item) => item.status === "verified" && item.id === slug);
   if (!staticTournament || !staticTournament.name) return null;

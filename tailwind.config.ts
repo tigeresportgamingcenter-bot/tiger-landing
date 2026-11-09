@@ -8,18 +8,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        tiger: {
-          red: "#ef2b23",
-          orange: "#ff6a00",
-          black: "#070707",
-        },
-      },
-      boxShadow: {
-        glow: "0 0 38px rgba(255, 74, 0, 0.22)",
+        ground: "#0a0612",
+        panel: "#150f22",
+        paper: "#f3effc",
+        accent: "#b44dff",
       },
       fontFamily: {
-        sans: ["var(--font-be-vietnam-pro)", "sans-serif"],
-        display: ["var(--font-orbitron)", "sans-serif"],
+        sans: ["var(--font-archivo)", "sans-serif"],
+        display: ["var(--font-archivo)", "sans-serif"],
       },
     },
   },

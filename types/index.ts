@@ -27,4 +27,6 @@ export type {
   TournamentEvent,
   TournamentStatus,
   SupportedGame,
+  LeaderboardEntry,
+  LeaderboardPeriod,
 } from "./content";

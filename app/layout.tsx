@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Orbitron } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 
-const beVietnamPro = Be_Vietnam_Pro({ subsets: ["vietnamese"], variable: "--font-be-vietnam-pro", weight: ["400", "500", "600", "700", "800"] });
-const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", weight: ["700", "800", "900"] });
+const archivo = Archivo({ subsets: ["latin", "vietnamese"], axes: ["wdth"], variable: "--font-archivo", display: "swap" });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.tigeresports.online";
 
 export const metadata: Metadata = {
@@ -16,8 +15,8 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Tiger Esports", description: "Cyber Game cao cấp cho game thủ Thanh Hóa và Sầm Sơn.", images: ["/opengraph-image"] },
 };
 
-export const viewport: Viewport = { themeColor: "#070707", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#0a0612", colorScheme: "dark" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="vi"><body className={`${beVietnamPro.variable} ${orbitron.variable} font-sans antialiased`}>{children}</body></html>;
+  return <html lang="vi"><body className={`${archivo.variable} font-sans antialiased`}>{children}</body></html>;
 }

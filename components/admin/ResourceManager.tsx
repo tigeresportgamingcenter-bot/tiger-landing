@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { saveContent } from "@/app/admin/actions";
+import { complaintStatusLabel } from "@/lib/complaints";
 import { DeleteContentButton } from "./DeleteContentButton";
 import { MediaUploadField } from "./MediaUploadField";
 
 export interface AdminField {
   name: string;
   label: string;
-  type?: "text" | "number" | "date" | "month" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video" | "promotion-tiers";
+  type?: "text" | "number" | "date" | "month" | "datetime-local" | "url" | "textarea" | "checkbox" | "select" | "image" | "video" | "promotion-tiers" | "readonly";
   required?: boolean;
   options?: Array<string | { label: string; value: string }>;
   group?: "main" | "media" | "status" | "details";
@@ -31,10 +32,13 @@ const groupLabels: Record<NonNullable<AdminField["group"]>, string> = {
 };
 
 function recordLabel(record: Record<string, unknown>) {
+  if (typeof record.code === "string" && typeof record.customer_name === "string") return `${record.code} · ${record.customer_name}`;
+  if (typeof record.branch_slug === "string" && typeof record.period_type === "string") return `#${String(record.rank ?? "")} ${String(record.display_name ?? "")} · ${record.branch_slug} · ${record.period_type === "week" ? "Tuần" : "Tháng"} ${String(record.period_start ?? "")}`;
   return String(record.name ?? record.display_name ?? record.title ?? record.question ?? record.image_key ?? record.slug ?? record.id);
 }
 
 function recordStatus(record: Record<string, unknown>, resource: string) {
+  if (resource === "complaints") return complaintStatusLabel(String(record.status ?? "new"));
   const published = Boolean(record.published);
   const verified = Boolean(record.verified);
   const featured = Boolean(record.featured);
@@ -51,7 +55,16 @@ function recordStatus(record: Record<string, unknown>, resource: string) {
 
 function Field({ field, record, resource }: { field: AdminField; record?: Record<string, unknown>; resource: string }) {
   const value = record?.[field.name];
-  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-tiger-orange";
+  const className = "min-h-11 w-full rounded-lg border border-white/10 bg-black/40 px-3 text-sm text-white outline-none focus:border-accent";
+
+  if (field.type === "readonly") {
+    return (
+      <div data-admin-field={field.name} className="md:col-span-2">
+        <p className="text-xs text-zinc-500">{field.label}</p>
+        <p className="mt-1 whitespace-pre-line rounded-lg bg-black/30 px-3 py-2 text-sm text-zinc-200">{String(value ?? "") || "—"}</p>
+      </div>
+    );
+  }
 
   if (field.type === "image") {
     return <MediaUploadField name={field.name} label={field.label} kind="image" resource={resource} currentUrl={typeof value === "string" ? value : ""} required={field.required} />;
@@ -97,7 +110,7 @@ function Field({ field, record, resource }: { field: AdminField; record?: Record
   if (field.type === "checkbox") {
     return (
       <label data-admin-field={field.name} className="flex min-h-11 items-center gap-2 text-sm text-zinc-300">
-        <input type="checkbox" name={field.name} defaultChecked={Boolean(value)} className="size-4 accent-orange-500" />
+        <input type="checkbox" name={field.name} defaultChecked={Boolean(value)} className="size-4 accent-violet-500" />
         {field.label}
       </label>
     );
@@ -183,7 +196,7 @@ function Editor({ resource, fields, record, returnTo }: { resource: string; fiel
         />
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <button className="min-h-11 rounded-lg bg-gradient-to-r from-tiger-red to-tiger-orange px-5 text-sm font-bold text-white">{record ? "Lưu thay đổi" : "Tạo mới"}</button>
+        <button className="min-h-11 rounded-lg bg-gradient-to-r from-accent to-accent px-5 text-sm font-bold text-white">{record ? "Lưu thay đổi" : "Tạo mới"}</button>
         <Link href={returnTo} className="inline-flex min-h-11 items-center rounded-lg border border-white/15 px-5 text-sm font-bold text-white">Hủy</Link>
       </div>
     </form>
@@ -201,7 +214,7 @@ export function ResourceManager({ title, resource, fields, records, moduleHref, 
           <h2 className="text-2xl font-extrabold text-white">{title}</h2>
           {note ? <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">{note}</p> : null}
         </div>
-        <Link href={`${moduleHref}&edit=new`} className="inline-flex min-h-11 items-center rounded-lg bg-tiger-orange px-4 text-sm font-bold text-white">Tạo mới</Link>
+        {resource === "complaints" ? null : <Link href={`${moduleHref}&edit=new`} className="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-bold text-ground">Tạo mới</Link>}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.25fr]">
@@ -215,9 +228,9 @@ export function ResourceManager({ title, resource, fields, records, moduleHref, 
               const isSelected = selectedRecord?.id === record.id;
               const href = `${moduleHref}&edit=${String(record.id)}`;
               return (
-                <div key={String(record.id)} className={`grid grid-cols-[1fr_auto] items-center gap-3 border-b border-white/5 px-4 py-3 ${isSelected ? "bg-tiger-orange/10" : ""}`}>
+                <div key={String(record.id)} className={`grid grid-cols-[1fr_auto] items-center gap-3 border-b border-white/5 px-4 py-3 ${isSelected ? "bg-accent/10" : ""}`}>
                   <div>
-                    <Link href={href} className="font-semibold text-zinc-100 hover:text-tiger-orange">{recordLabel(record)}</Link>
+                    <Link href={href} className="font-semibold text-zinc-100 hover:text-accent">{recordLabel(record)}</Link>
                     <p className="mt-1 text-xs text-zinc-600">{String(record.slug ?? record.image_key ?? record.id)}</p>
                   </div>
                   <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-bold text-zinc-400">{recordStatus(record, resource)}</span>
