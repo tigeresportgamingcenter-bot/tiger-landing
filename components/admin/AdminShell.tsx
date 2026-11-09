@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { logout } from "@/app/admin/actions";
 import { TigerMark } from "@/components/ui/TigerMark";
-import { adminGhostButton, adminInputBare } from "./styles";
-
-export interface AdminModule {
-  key: string;
-  label: string;
-  resource?: string;
-  title: string;
-}
+import type { ListFilter } from "@/lib/admin/data";
+import { adminButton, adminGhostButton, adminInputBare } from "./styles";
 
 type NoticeTone = "error" | "warning" | "success";
 
@@ -17,6 +11,9 @@ const toneClass: Record<NoticeTone, string> = {
   warning: "bg-amber-500/15 text-amber-200",
   success: "bg-emerald-500/15 text-emerald-200",
 };
+
+export interface NavItem { key: string; label: string }
+export interface NavGroup { label: string; items: NavItem[] }
 
 export function AdminHeader({ email }: { email?: string }) {
   return (
@@ -37,27 +34,34 @@ export function AdminHeader({ email }: { email?: string }) {
   );
 }
 
-export function AdminNav({ modules, active, badges = {} }: { modules: AdminModule[]; active: string; badges?: Record<string, number> }) {
+function NavLink({ item, active, badge }: { item: NavItem; active: boolean; badge?: number }) {
+  return (
+    <Link
+      href={`/admin/dashboard?module=${item.key}`}
+      aria-current={active ? "page" : undefined}
+      className={`flex min-h-11 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-4 text-base font-bold transition-colors ${active ? "neon-glow bg-accent text-ground" : "bg-panel text-zinc-200 hover:bg-white/10 lg:bg-transparent"}`}
+    >
+      {item.label}
+      {badge ? <span className={`rounded-full px-2 text-[13px] font-bold ${active ? "bg-ground text-white" : "bg-accent text-ground"}`}>{badge}</span> : null}
+    </Link>
+  );
+}
+
+/** Phone: one scrolling row of chips. Desktop: a sidebar with the sections grouped under headings. */
+export function AdminNav({ groups, active, badges = {} }: { groups: NavGroup[]; active: string; badges?: Record<string, number> }) {
   return (
     <nav aria-label="Các mục quản trị" className="sticky top-0 z-20 -mx-4 bg-ground px-4 py-2 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:rounded-xl lg:bg-panel lg:p-3">
-      <ul className="flex gap-2 overflow-x-auto lg:grid lg:gap-1 lg:overflow-visible">
-        {modules.map((module) => {
-          const isActive = active === module.key;
-          const badge = badges[module.key] ?? 0;
-          return (
-            <li key={module.key} className="shrink-0">
-              <Link
-                href={`/admin/dashboard?module=${module.key}`}
-                aria-current={isActive ? "page" : undefined}
-                className={`flex min-h-11 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-4 text-base font-bold transition-colors ${isActive ? "neon-glow bg-accent text-ground" : "bg-panel text-zinc-200 hover:bg-white/10 lg:bg-transparent"}`}
-              >
-                {module.label}
-                {badge > 0 ? <span className={`rounded-full px-2 text-[13px] font-bold ${isActive ? "bg-ground text-white" : "bg-accent text-ground"}`}>{badge}</span> : null}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="flex gap-2 overflow-x-auto lg:block">
+        <NavLink item={{ key: "overview", label: "Tổng quan" }} active={active === "overview"} />
+        {groups.map((group) => (
+          <div key={group.label} className="flex gap-2 lg:mt-4 lg:block">
+            <p className="hidden px-4 pb-1 text-[13px] font-bold uppercase tracking-wider text-zinc-400 lg:block">{group.label}</p>
+            <ul className="flex gap-2 lg:grid lg:gap-1">
+              {group.items.map((item) => <li key={item.key} className="shrink-0"><NavLink item={item} active={active === item.key} badge={badges[item.key]} /></li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
     </nav>
   );
 }
@@ -66,38 +70,64 @@ export function AdminNotice({ tone, children }: { tone: NoticeTone; children: Re
   return <p role={tone === "error" ? "alert" : "status"} className={`mt-5 rounded-lg px-4 py-3 text-base leading-7 ${toneClass[tone]}`}>{children}</p>;
 }
 
-export function OverviewGrid({ items }: { items: Array<{ key: string; label: string; count: number; pending?: number }> }) {
+export interface OverviewData {
+  newComplaints: number;
+  quickActions: Array<{ href: string; label: string }>;
+  groups: Array<{ label: string; items: Array<{ key: string; label: string; count: number | null }> }>;
+}
+
+export function Overview({ newComplaints, quickActions, groups }: OverviewData) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {items.map((item) => (
-        <Link key={item.key} href={`/admin/dashboard?module=${item.key}`} className="press group rounded-xl bg-panel p-5 transition-colors hover:bg-white/10">
-          <p className="text-base text-zinc-300">{item.label}</p>
-          <p className="mt-2 font-display text-6xl leading-none text-white group-hover:text-accent">{item.count}</p>
-          {item.pending ? <p className="mt-3 inline-block rounded-full bg-accent px-3 py-1 text-[13px] font-bold text-ground">{item.pending} mới cần xử lý</p> : null}
-        </Link>
+    <div className="space-y-8">
+      <section aria-labelledby="attention" className="rounded-xl bg-panel p-5 sm:p-6">
+        <h2 id="attention" className="font-display text-3xl uppercase text-white">Cần xử lý</h2>
+        {newComplaints > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-lg text-zinc-100"><span className="font-display text-5xl text-accent">{newComplaints}</span> khiếu nại mới chưa được xem</p>
+            <Link href="/admin/dashboard?module=complaints&filter=new" className={adminButton}>Xử lý ngay</Link>
+          </div>
+        ) : <p className="mt-2 text-lg text-zinc-300">Không có việc nào đang chờ. Khiếu nại mới sẽ hiện ở đây.</p>}
+      </section>
+
+      <section aria-labelledby="quick">
+        <h2 id="quick" className="font-display text-3xl uppercase text-white">Việc hay làm</h2>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {quickActions.map((action) => <Link key={action.href} href={action.href} className={adminGhostButton}>{action.label}</Link>)}
+        </div>
+      </section>
+
+      {groups.map((group) => (
+        <section key={group.label} aria-label={group.label}>
+          <h2 className="font-display text-3xl uppercase text-white">{group.label}</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {group.items.map((item) => (
+              <Link key={item.key} href={`/admin/dashboard?module=${item.key}`} className="press group flex items-center justify-between gap-4 rounded-xl bg-panel p-5 transition-colors hover:bg-white/10">
+                <span className="text-lg font-semibold text-zinc-100 group-hover:text-accent">{item.label}</span>
+                <span className="font-display text-4xl leading-none text-white">{item.count ?? "–"}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
 }
 
-export function FilterBar({ module, q, filter }: { module: string; q: string; filter: string }) {
+export function ListToolbar({ module, q, filter, filters }: { module: string; q: string; filter: string; filters: ListFilter[] }) {
+  const href = (value: string) => `/admin/dashboard?module=${module}${q ? `&q=${encodeURIComponent(q)}` : ""}${value !== "all" ? `&filter=${value}` : ""}`;
   return (
-    <form className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
-      <input type="hidden" name="module" value={module} />
-      <input name="q" defaultValue={q} placeholder="Tìm theo tên, slug..." aria-label="Tìm kiếm" className={adminInputBare} />
-      <select name="filter" defaultValue={filter} aria-label="Lọc theo trạng thái" className={adminInputBare}>
-        <option value="all">Tất cả trạng thái</option>
-        <option value="draft">Nháp</option>
-        <option value="verified">Đã xác minh</option>
-        <option value="published">Đang hiển thị</option>
-        <option value="featured">Nổi bật</option>
-        <option value="registration_open">Mở đăng ký</option>
-        <option value="completed">Đã kết thúc</option>
-        <option value="new">Khiếu nại mới</option>
-        <option value="in_progress">Khiếu nại đang xử lý</option>
-        <option value="resolved">Khiếu nại đã giải quyết</option>
-      </select>
-      <button className={adminGhostButton}>Lọc</button>
-    </form>
+    <div className="space-y-3">
+      <form className="flex gap-2">
+        <input type="hidden" name="module" value={module} />
+        {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
+        <input name="q" defaultValue={q} placeholder="Tìm theo tên..." aria-label="Tìm kiếm" className={adminInputBare} />
+        <button className={adminGhostButton}>Tìm</button>
+      </form>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc theo trạng thái">
+        {filters.map((item) => (
+          <Link key={item.value} href={href(item.value)} aria-current={filter === item.value ? "true" : undefined} className={`press inline-flex min-h-11 items-center rounded-full px-4 text-base font-semibold transition-colors ${filter === item.value ? "bg-accent text-ground" : "bg-panel text-zinc-200 hover:bg-white/10"}`}>{item.label}</Link>
+        ))}
+      </div>
+    </div>
   );
 }
