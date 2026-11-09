@@ -86,12 +86,42 @@ function promotionTierPayload(formData: FormData) {
 }
 
 function normalizePeriodStart(value: string | null, period: "week" | "month") {
-  if (!value || !/^d{4}-d{2}-d{2}$/.test(value)) return null;
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const date = new Date(`${value}T00:00:00Z`);
   if (Number.isNaN(date.valueOf())) return null;
   if (period === "month") date.setUTCDate(1);
   else date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   return date.toISOString().slice(0, 10);
+}
+
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+const slugResources: Resource[] = ["branches", "promotions", "tournaments", "pc_tiers"];
+
+async function uniqueSlug(supabase: Awaited<ReturnType<typeof requireAdmin>>, resource: Resource, name: string) {
+  const base = slugify(name) || "muc";
+  const { data } = await supabase.from(resource).select("slug").like("slug", `${base}%`);
+  const taken = new Set((data ?? []).map((row) => String(row.slug)));
+  if (!taken.has(base)) return base;
+  let index = 2;
+  while (taken.has(`${base}-${index}`)) index += 1;
+  return `${base}-${index}`;
+}
+
+function withAltFallback(resource: Resource, payload: Record<string, unknown>) {
+  const label = resource === "hall_of_fame_members" ? payload.display_name : resource === "gallery_items" ? payload.title : payload.name;
+  if (typeof label === "string" && payload.image_url && !payload.image_alt && resource !== "promotions") payload.image_alt = label;
+  return payload;
 }
 
 function dashboardReturn(formData: FormData, status: "saved" | "deleted" | "uploaded", error?: string) {
@@ -224,7 +254,9 @@ export async function saveContent(formData: FormData) {
   let promotionTiers: ReturnType<typeof promotionTierPayload> = [];
   try {
     uploadedMedia = await uploadResourceMedia(supabase, resource, formData);
-    payload = buildPayload(resource, formData);
+    payload = withAltFallback(resource, buildPayload(resource, formData));
+    if (slugResources.includes(resource) && !id && !payload.slug && typeof payload.name === "string") payload.slug = await uniqueSlug(supabase, resource, payload.name);
+    if (slugResources.includes(resource) && id && !payload.slug) delete payload.slug;
     promotionTiers = resource === "promotions" && promotionType(formData) === "topup_bonus" ? promotionTierPayload(formData) : [];
   } catch (error) {
     await Promise.all(uploadedMedia.map((item) => supabase.storage.from(item.bucket).remove([item.objectPath])));
@@ -332,4 +364,39 @@ export async function uploadImage(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
   redirect(dashboardReturn(formData, "uploaded"));
+}
+
+export async function saveLeaderboardBulk(formData: FormData) {
+  const supabase = await requireAdmin();
+  const fail: (error: string) => never = (error) => redirect(dashboardReturn(formData, "saved", error));
+  const branchSlug = text(formData, "branch_slug");
+  const period = text(formData, "period_type") === "week" ? "week" : "month";
+  const periodStart = normalizePeriodStart(text(formData, "period_start"), period);
+  if (!branchSlug) fail("invalid-leaderboard-branch");
+  if (!periodStart) fail("invalid-period-start");
+  const publish = checked(formData, "published");
+  const consent = checked(formData, "consent_confirmed");
+  if (publish && !consent) fail("member-consent-required");
+
+  const rows: Array<Record<string, unknown>> = [];
+  const emptyRanks: number[] = [];
+  for (let rank = 1; rank <= 5; rank += 1) {
+    const name = text(formData, `name_${rank}`);
+    if (!name) { emptyRanks.push(rank); continue; }
+    if (name.length > 40) fail("invalid-leaderboard-name");
+    const points = Number(text(formData, `points_${rank}`) ?? 0);
+    if (!Number.isFinite(points) || points < 0) fail("invalid-leaderboard-points");
+    rows.push({ branch_slug: branchSlug, period_type: period, period_start: periodStart, rank, display_name: name, points: Math.round(points), consent_confirmed: consent, published: publish, verified: publish, source: "manual" });
+  }
+  if (!rows.length) fail("leaderboard-empty");
+
+  const { error } = await supabase.from("leaderboard_entries").upsert(rows, { onConflict: "branch_slug,period_type,period_start,rank" });
+  if (error) fail(error.message);
+  if (emptyRanks.length) {
+    const { error: deleteError } = await supabase.from("leaderboard_entries").delete().eq("branch_slug", branchSlug).eq("period_type", period).eq("period_start", periodStart).in("rank", emptyRanks);
+    if (deleteError) fail(deleteError.message);
+  }
+  revalidatePath("/");
+  revalidatePath("/admin/dashboard");
+  redirect(dashboardReturn(formData, "saved"));
 }

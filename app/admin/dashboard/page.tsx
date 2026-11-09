@@ -1,147 +1,16 @@
 import { redirect } from "next/navigation";
 import { uploadImage } from "@/app/admin/actions";
-import { AdminHeader, AdminNav, AdminNotice, FilterBar, OverviewGrid, type AdminModule } from "@/components/admin/AdminShell";
-import { ResourceManager, type AdminField } from "@/components/admin/ResourceManager";
+import { AdminHeader, AdminNav, AdminNotice, ListToolbar, Overview } from "@/components/admin/AdminShell";
+import { LeaderboardQuickEntry } from "@/components/admin/LeaderboardQuickEntry";
+import { ResourceManager } from "@/components/admin/ResourceManager";
 import { adminButton, adminInput } from "@/components/admin/styles";
-import { complaintCategoryLabel, complaintStatuses } from "@/lib/complaints";
+import { errorMessages, leaderboardFields, migrationNotices, moduleByKey, moduleFields, moduleGroups, modules } from "@/lib/admin/config";
+import { filterRecords, filtersFor, loadCounts, loadModule, loadNewComplaintCount } from "@/lib/admin/data";
+import type { ModuleKey } from "@/lib/admin/types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-type Row = Record<string, unknown>;
-type ModuleKey = "overview" | "media" | "branches" | "promotions" | "tournaments" | "honors" | "leaderboard" | "complaints" | "pc_tiers" | "gallery" | "faq";
-
-const commonFields: AdminField[] = [{ name: "published", label: "Đang hiển thị", type: "checkbox", group: "status" }, { name: "verified", label: "Đã xác minh", type: "checkbox", group: "status" }];
-const branchFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên cơ sở", required: true }, { name: "area", label: "Khu vực", required: true }, { name: "address", label: "Địa chỉ", type: "textarea", required: true }, { name: "map_url", label: "Google Maps URL" }, { name: "phone", label: "Hotline" }, { name: "opening_hours", label: "Giờ mở cửa" }, { name: "status", label: "Trạng thái", type: "select", options: ["active", "temporarily-closed", "unverified"] }, { name: "description", label: "Mô tả", type: "textarea", group: "details" }, { name: "image_url", label: "Ảnh cơ sở", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
-const promotionFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên chương trình", required: true }, { name: "promotion_type", label: "Loại chương trình", type: "select", options: [{ value: "combo", label: "Combo giờ chơi" }, { value: "topup_bonus", label: "Ưu đãi nạp tiền" }, { value: "gift", label: "Tặng quà" }, { value: "event", label: "Sự kiện" }, { value: "discount", label: "Giảm giá" }, { value: "other", label: "Khác" }] }, { name: "price", label: "Giá combo", type: "number" }, { name: "highlight_1", label: "Quyền lợi / điểm nổi bật 1", group: "details" }, { name: "highlight_2", label: "Quyền lợi / điểm nổi bật 2", group: "details" }, { name: "highlight_3", label: "Quyền lợi / điểm nổi bật 3", group: "details" }, { name: "highlight_4", label: "Quyền lợi / điểm nổi bật 4", group: "details" }, { name: "highlight_5", label: "Quyền lợi / điểm nổi bật 5", group: "details" }, { name: "promotion_tiers", label: "Bảng mốc nạp", type: "promotion-tiers", group: "details" }, { name: "note", label: "Ghi chú / điều kiện", type: "textarea", group: "details" }, { name: "branch_scope", label: "Cơ sở áp dụng", group: "details" }, { name: "image_url", label: "Ảnh khuyến mãi", type: "image", group: "media" }, { name: "valid_from", label: "Bắt đầu", type: "date", group: "status" }, { name: "valid_until", label: "Kết thúc", type: "date", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
-const tournamentFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên giải", required: true }, { name: "game", label: "Game", type: "select", options: [{ value: "TFT", label: "Đấu Trường Chân Lý (TFT)" }, { value: "LoL", label: "Liên Minh Huyền Thoại (LoL)" }, "FC Online", "Valorant", "AOE"] }, { name: "status", label: "Trạng thái", type: "select", options: ["upcoming", "registration_open", "ongoing", "completed"] }, { name: "description", label: "Lead / mô tả ngắn", type: "textarea", group: "details" }, { name: "rules", label: "Thể lệ", type: "textarea", group: "details" }, { name: "held_on", label: "Ngày tổ chức", type: "date" }, { name: "starts_at", label: "Bắt đầu", type: "datetime-local" }, { name: "ends_at", label: "Kết thúc", type: "datetime-local" }, { name: "branch_name", label: "Cơ sở" }, { name: "format", label: "Thể thức" }, { name: "entry_fee", label: "Lệ phí", type: "number" }, { name: "prize_pool", label: "Tổng giải thưởng", group: "details" }, { name: "prize_first", label: "Giải Nhất", group: "details" }, { name: "prize_second", label: "Giải Nhì", group: "details" }, { name: "prize_third", label: "Giải Ba", group: "details" }, { name: "registration_url", label: "URL đăng ký", type: "url" }, { name: "registration_open", label: "Mở đăng ký", type: "checkbox", group: "status" }, { name: "show_in_hall_of_fame", label: "Hiển thị trong Vinh danh nhà vô địch", type: "checkbox", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "top_1", label: "Top 1", group: "details" }, { name: "top_2", label: "Top 2", group: "details" }, { name: "top_3", label: "Top 3", group: "details" }, { name: "summary_title", label: "Tiêu đề tổng kết", group: "details" }, { name: "summary_content", label: "Nội dung tổng kết", type: "textarea", group: "details" }, { name: "highlight_1", label: "Khoảnh khắc nổi bật 1", group: "details" }, { name: "highlight_2", label: "Khoảnh khắc nổi bật 2", group: "details" }, { name: "highlight_3", label: "Khoảnh khắc nổi bật 3", group: "details" }, { name: "highlight_4", label: "Khoảnh khắc nổi bật 4", group: "details" }, { name: "highlight_5", label: "Khoảnh khắc nổi bật 5", group: "details" }, { name: "facebook_post_url", label: "URL bài Facebook", type: "url", group: "details" }, { name: "image_url", label: "Ảnh giải đấu", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video / recap", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, ...commonFields];
-const memberFields: AdminField[] = [{ name: "display_name", label: "Nickname rút gọn", required: true }, { name: "tier", label: "Hạng", type: "select", options: ["Diamond", "Platinum", "Gold"] }, { name: "honor_month", label: "Tháng vinh danh", type: "month" }, { name: "member_points", label: "Điểm hội viên", type: "number" }, { name: "note", label: "Ghi chú ngắn", type: "textarea", group: "details" }, { name: "sort_order", label: "Thứ tự khi bằng điểm", type: "number", group: "status" }, { name: "image_url", label: "Ảnh hội viên", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "consent_confirmed", label: "Khách đã đồng ý công khai", type: "checkbox", group: "status" }, ...commonFields];
-const galleryFields: AdminField[] = [{ name: "title", label: "Tiêu đề", required: true }, { name: "caption", label: "Chú thích", type: "textarea", group: "details" }, { name: "media_type", label: "Loại media", type: "select", options: ["image", "video"] }, { name: "image_url", label: "Ảnh gallery", type: "image", group: "media" }, { name: "image_alt", label: "Alt ảnh", group: "media" }, { name: "video_url", label: "Video", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Ảnh poster video", type: "image", group: "media" }, { name: "bucket", label: "Bucket ảnh", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"] }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
-const siteImageFields: AdminField[] = [{ name: "image_key", label: "Khóa media (hero dùng hero-main)", required: true }, { name: "media_type", label: "Loại media hero", type: "select", options: [{ value: "image", label: "Ảnh" }, { value: "video", label: "Video" }] }, { name: "public_url", label: "Ảnh hero / ảnh fallback", type: "image", group: "media" }, { name: "video_url", label: "Video hero", type: "video", group: "media" }, { name: "video_provider", label: "Nguồn video", type: "select", options: ["upload", "youtube", "facebook", "external"], group: "media" }, { name: "poster_url", label: "Poster video", type: "image", group: "media" }, { name: "alt_text", label: "Alt text", required: true }, { name: "bucket", label: "Bucket", type: "select", options: ["hero", "branches", "community", "hall-of-fame", "members"], group: "status" }, { name: "object_path", label: "Đường dẫn object (tự điền khi upload)", group: "status" }, ...commonFields];
-const pcTierFields: AdminField[] = [{ name: "slug", label: "Slug", required: true }, { name: "name", label: "Tên hạng máy", required: true }, { name: "subtitle", label: "Mô tả ngắn" }, { name: "cpu", label: "CPU", required: true }, { name: "gpu", label: "GPU", required: true }, { name: "ram", label: "RAM", required: true }, { name: "monitor", label: "Màn hình", required: true }, { name: "mainboard", label: "Mainboard", group: "details" }, { name: "storage", label: "Ổ cứng", group: "details" }, { name: "peripherals", label: "Thiết bị ngoại vi", type: "textarea", group: "details" }, { name: "note", label: "Ghi chú", type: "textarea", group: "details" }, { name: "branch_scope", label: "Phạm vi cơ sở", group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, { name: "featured", label: "Nổi bật", type: "checkbox", group: "status" }, ...commonFields];
-const faqFields: AdminField[] = [{ name: "question", label: "Câu hỏi", required: true }, { name: "answer", label: "Câu trả lời", type: "textarea", required: true, group: "details" }, { name: "sort_order", label: "Thứ tự", type: "number", group: "status" }, ...commonFields];
-
-function leaderboardFields(branchRows: Row[]): AdminField[] {
-  return [
-    { name: "branch_slug", label: "Cơ sở", type: "select", required: true, options: branchRows.map((branch) => ({ value: String(branch.slug), label: String(branch.name) })) },
-    { name: "period_type", label: "Loại kỳ", type: "select", options: [{ value: "week", label: "Tuần" }, { value: "month", label: "Tháng" }] },
-    { name: "period_start", label: "Một ngày bất kỳ trong tuần hoặc tháng cần xếp hạng", type: "date", required: true },
-    { name: "rank", label: "Hạng (1 đến 5)", type: "number", required: true },
-    { name: "display_name", label: "Nickname rút gọn", required: true },
-    { name: "points", label: "Điểm", type: "number" },
-    { name: "consent_confirmed", label: "Người chơi đã đồng ý công khai", type: "checkbox", group: "status" },
-    ...commonFields,
-  ];
-}
-
-const complaintFields: AdminField[] = [
-  { name: "code", label: "Mã khiếu nại", type: "readonly" },
-  { name: "created_at", label: "Gửi lúc", type: "readonly" },
-  { name: "customer_name", label: "Khách hàng", type: "readonly" },
-  { name: "phone", label: "Số điện thoại", type: "readonly" },
-  { name: "branch_slug", label: "Cơ sở", type: "readonly" },
-  { name: "category", label: "Nhóm vấn đề", type: "readonly" },
-  { name: "content", label: "Nội dung phản ánh", type: "readonly" },
-  { name: "status", label: "Trạng thái xử lý", type: "select", options: complaintStatuses.map((item) => ({ value: item.value, label: item.label })), group: "details" },
-  { name: "assigned_to", label: "Người phụ trách", group: "details" },
-  { name: "public_response", label: "Phản hồi gửi khách (khách xem được khi tra cứu)", type: "textarea", group: "details" },
-  { name: "internal_note", label: "Ghi chú nội bộ (khách không thấy)", type: "textarea", group: "details" },
-];
-
-const modules: Array<AdminModule & { key: ModuleKey }> = [
-  { key: "overview", label: "Tổng quan", title: "Tổng quan" },
-  { key: "media", label: "Ảnh & Media", resource: "site_images", title: "Ảnh website" },
-  { key: "branches", label: "Cơ sở", resource: "branches", title: "Cơ sở" },
-  { key: "promotions", label: "Khuyến mãi", resource: "promotions", title: "Khuyến mãi" },
-  { key: "tournaments", label: "Giải đấu", resource: "tournaments", title: "Giải đấu" },
-  { key: "honors", label: "Vinh danh", resource: "hall_of_fame_members", title: "Hội viên vinh danh" },
-  { key: "leaderboard", label: "Xếp hạng tuần / tháng", resource: "leaderboard_entries", title: "Xếp hạng người chơi" },
-  { key: "complaints", label: "Khiếu nại", resource: "complaints", title: "Khiếu nại khách hàng" },
-  { key: "pc_tiers", label: "Dàn máy / Cấu hình", resource: "pc_tiers", title: "Dàn máy / Cấu hình" },
-  { key: "gallery", label: "Gallery", resource: "gallery_items", title: "Gallery" },
-  { key: "faq", label: "Thông tin cần biết / FAQ", resource: "faq_items", title: "Thông tin cần biết / FAQ" },
-];
-
-const moduleFields: Record<string, AdminField[]> = {
-  branches: branchFields,
-  promotions: promotionFields,
-  tournaments: tournamentFields,
-  hall_of_fame_members: memberFields,
-  site_images: siteImageFields,
-  pc_tiers: pcTierFields,
-  gallery_items: galleryFields,
-  faq_items: faqFields,
-  leaderboard_entries: [],
-  complaints: complaintFields,
-};
-
-const errorMessages: Record<string, string> = {
-  "invalid-image": "Ảnh phải là JPEG, PNG hoặc WebP và không vượt quá 5MB.",
-  "invalid-video": "Video phải là MP4 hoặc WebM và không vượt quá 25MB.",
-  "invalid-media-bucket": "Bucket media không hợp lệ hoặc migration video chưa được kích hoạt.",
-  "publish-requires-verified": "Không thể công khai nội dung khi chưa bật Đã xác minh.",
-  "invalid-image-url": "URL ảnh phải là đường dẫn /images hoặc URL Supabase Storage hợp lệ.",
-  "invalid-poster-url": "URL poster phải là đường dẫn /images hoặc URL Supabase Storage hợp lệ.",
-  "invalid-video-url": "URL video phải bắt đầu bằng http:// hoặc https://.",
-  "gallery-image-required": "Gallery loại ảnh cần ảnh hoặc file ảnh.",
-  "gallery-video-required": "Gallery loại video cần URL hoặc file video.",
-  "invalid-registration-url": "URL đăng ký phải bắt đầu bằng http:// hoặc https://.",
-  "invalid-facebook-post-url": "URL bài Facebook phải bắt đầu bằng http:// hoặc https://.",
-  "registration-url-required": "Giải mở đăng ký bắt buộc có URL đăng ký.",
-  "member-consent-required": "Không thể công khai hội viên khi chưa xác nhận đồng ý.",
-  "invalid-promotion-tier": "Mốc nạp phải có mức nạp > 0, khách nhận > 0 và khách nhận không nhỏ hơn mức nạp.",
-  "invalid-complaint-status": "Trạng thái xử lý không hợp lệ.",
-  "complaint-create-blocked": "Khiếu nại chỉ do khách gửi, không tạo mới trong admin.",
-  "invalid-leaderboard-rank": "Hạng phải là số nguyên từ 1 đến 5.",
-  "invalid-period-start": "Cần chọn ngày hợp lệ để xác định tuần hoặc tháng.",
-  "invalid-combo-price": "Combo giờ chơi cần nhập Giá combo lớn hơn 0.",
-};
-
-function statusOf(record: Row, resource?: string) {
-  if (resource === "complaints") return String(record.status ?? "new");
-  if (resource === "tournaments" && record.registration_open) return "registration_open";
-  if (resource === "tournaments" && record.status === "completed") return "completed";
-  if (record.featured) return "featured";
-  if (record.published && record.verified) return "published";
-  if (record.verified) return "verified";
-  return "draft";
-}
-
-function normalizeRecords(resource: string, records: Row[], promotionTiers: Row[] = []) {
-  if (resource === "promotions") {
-    return records.map((record) => {
-      const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
-      const tiers = promotionTiers.filter((tier) => tier.promotion_id === record.id).sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)).slice(0, 8);
-      const tierFields = Object.fromEntries(tiers.flatMap((tier, index) => {
-        const row = index + 1;
-        return [[`tier_${row}_pay_amount`, tier.pay_amount ?? ""], [`tier_${row}_receive_amount`, tier.receive_amount ?? ""], [`tier_${row}_bonus_amount`, tier.bonus_amount ?? ""], [`tier_${row}_note`, tier.note ?? ""], [`tier_${row}_sort_order`, tier.sort_order ?? index]];
-      }));
-      return { ...record, promotion_type: record.promotion_type ?? "combo", ...tierFields, highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
-    });
-  }
-  if (resource === "tournaments") {
-    return records.map((record) => {
-      const placements = Array.isArray(record.placements) ? record.placements as Array<Record<string, unknown>> : [];
-      const highlights = Array.isArray(record.highlights) ? record.highlights.filter((item): item is string => typeof item === "string") : [];
-      return { ...record, top_1: placements.find((placement) => placement.position === 1)?.displayName ?? "", top_2: placements.find((placement) => placement.position === 2)?.displayName ?? "", top_3: placements.find((placement) => placement.position === 3)?.displayName ?? "", highlight_1: highlights[0] ?? "", highlight_2: highlights[1] ?? "", highlight_3: highlights[2] ?? "", highlight_4: highlights[3] ?? "", highlight_5: highlights[4] ?? "" };
-    });
-  }
-  if (resource === "complaints") {
-    return records.map((record) => ({ ...record, category: complaintCategoryLabel(String(record.category ?? "")), created_at: typeof record.created_at === "string" ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(record.created_at)) : "" }));
-  }
-  if (resource === "hall_of_fame_members") {
-    return records.map((record) => ({ ...record, honor_month: typeof record.honor_month === "string" ? record.honor_month.slice(0, 7) : "" }));
-  }
-  return records;
-}
-
-function filterRecords(records: Row[], resource: string | undefined, q: string, status: string) {
-  return records.filter((record) => {
-    const haystack = [record.name, record.title, record.display_name, record.slug, record.image_key, record.id].map((item) => String(item ?? "").toLowerCase()).join(" ");
-    const matchesSearch = !q || haystack.includes(q.toLowerCase());
-    const matchesStatus = status === "all" || statusOf(record, resource) === status;
-    return matchesSearch && matchesStatus;
-  });
-}
+const savedMessages: Record<string, string> = { saved: "Đã lưu thay đổi.", deleted: "Đã xóa.", uploaded: "Đã tải ảnh lên." };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ module?: string; q?: string; filter?: string; edit?: string; error?: string; status?: string }> }) {
   if (!isSupabaseConfigured()) redirect("/admin/login?error=config");
@@ -149,7 +18,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const activeModule = modules.some((module) => module.key === params.module) ? params.module as ModuleKey : "overview";
   const q = params.q ?? "";
   const filter = params.filter ?? "all";
-  const selectedEdit = params.edit;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -157,83 +25,86 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
   if (!membership) redirect("/admin/login?error=permission");
 
-  const tables = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items", "leaderboard_entries", "complaints"] as const;
-  const results = await Promise.all(tables.map((table) => supabase.from(table).select("*").order("created_at", { ascending: false })));
-  const data = Object.fromEntries(tables.map((table, index) => [table, (results[index].data ?? []) as Row[]])) as Record<(typeof tables)[number], Row[]>;
-  const { data: promotionTiers } = await supabase.from("promotion_tiers").select("*").order("sort_order");
-  const optionalTables: string[] = ["faq_items", "leaderboard_entries", "complaints"];
-  const loadError = results.find((result, index) => !optionalTables.includes(tables[index]) && result.error)?.error?.message;
-  const faqResult = results[tables.indexOf("faq_items")];
-  const faqNeedsMigration = activeModule === "faq" && Boolean(faqResult.error);
-  const leaderboardResult = results[tables.indexOf("leaderboard_entries")];
-  const leaderboardNeedsMigration = activeModule === "leaderboard" && Boolean(leaderboardResult.error);
-  const complaintsResult = results[tables.indexOf("complaints")];
-  const complaintsNeedMigration = activeModule === "complaints" && Boolean(complaintsResult.error);
+  // Only the active section is loaded. The overview uses count-only requests, so it stays fast as content grows.
+  const current = moduleByKey[activeModule];
+  const resource = current.resource;
+  const [newComplaints, counts, data] = await Promise.all([
+    loadNewComplaintCount(supabase),
+    activeModule === "overview" ? loadCounts(supabase) : Promise.resolve(null),
+    resource ? loadModule(supabase, current, params.edit) : Promise.resolve(null),
+  ]);
+
+  const notice = resource ? migrationNotices[resource] : undefined;
+  const needsMigration = Boolean(notice && data?.error);
+  const loadError = data?.error && !needsMigration ? data.error : undefined;
   const visibleError = params.error ? errorMessages[params.error] ?? params.error : undefined;
-  const successMessage = params.status === "saved" ? "Đã lưu thay đổi." : params.status === "deleted" ? "Đã xóa nội dung." : params.status === "uploaded" ? "Đã upload ảnh website." : null;
+  const successMessage = params.status ? savedMessages[params.status] : undefined;
 
-  const currentModule = modules.find((module) => module.key === activeModule)!;
-  const resource = currentModule.resource;
   const moduleHref = `/admin/dashboard?module=${activeModule}${q ? `&q=${encodeURIComponent(q)}` : ""}${filter !== "all" ? `&filter=${filter}` : ""}`;
-  const returnTo = moduleHref;
-
-  const records = resource ? filterRecords(normalizeRecords(resource, data[resource as keyof typeof data] ?? [], (promotionTiers ?? []) as Row[]), resource, q, filter) : [];
-
-  const badges = { complaints: data.complaints.filter((record) => (record.status ?? "new") === "new").length };
-  const overviewItems = modules.filter((module) => module.resource).map((module) => ({
-    key: module.key,
-    label: module.label,
-    count: data[module.resource as keyof typeof data]?.length ?? 0,
-    pending: module.key === "complaints" ? badges.complaints : 0,
-  }));
+  const records = resource && data ? filterRecords(data.records, resource, q, filter) : [];
+  const navGroups = moduleGroups.map((group) => ({ label: group.label, items: group.keys.map((key) => ({ key, label: moduleByKey[key].label })) }));
 
   return (
     <main className="min-h-screen bg-ground px-4 pb-16 pt-6 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
         <AdminHeader email={user.email} />
 
-        {visibleError || loadError ? <AdminNotice tone="error">{visibleError ?? `Không thể tải dữ liệu: ${loadError}`}</AdminNotice> : null}
-        {faqNeedsMigration ? <AdminNotice tone="warning">Module FAQ chưa được kích hoạt trên Supabase. Chạy migration <code>20260701_faq_admin_cms.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
-        {leaderboardNeedsMigration ? <AdminNotice tone="warning">Module Xếp hạng chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_lol_game_and_leaderboard.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
-        {complaintsNeedMigration ? <AdminNotice tone="warning">Module Khiếu nại chưa được kích hoạt trên Supabase. Chạy migration <code>20261109_complaints.sql</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
-        {successMessage ? <AdminNotice tone="success">{successMessage}</AdminNotice> : null}
+        {visibleError ? <AdminNotice tone="error">{visibleError}</AdminNotice> : null}
+        {loadError ? <AdminNotice tone="error">{`Không thể tải dữ liệu: ${loadError}`}</AdminNotice> : null}
+        {needsMigration && notice ? <AdminNotice tone="warning">Mục {notice.name} chưa được kích hoạt trên Supabase. Chạy migration <code>{notice.file}</code> trong SQL Editor, sau đó tải lại trang.</AdminNotice> : null}
+        {successMessage && !visibleError ? <AdminNotice tone="success">{successMessage}</AdminNotice> : null}
 
         <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-4 lg:self-start">
-            <AdminNav modules={modules} active={activeModule} badges={badges} />
+            <AdminNav groups={navGroups} active={activeModule} badges={{ complaints: newComplaints }} />
           </aside>
 
           <section className="min-w-0 space-y-5">
-            {activeModule === "overview" ? <OverviewGrid items={overviewItems} /> : null}
-
-            {activeModule === "media" ? (
-              <section className="rounded-xl bg-panel p-5 sm:p-6">
-                <h2 className="font-display text-3xl uppercase text-white">Upload ảnh website</h2>
-                <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-300">Dùng cho hero/community/branch/member. Khuyến nghị video hero MP4/WebM public URL từ Supabase Storage, dài 5–12 giây và tắt âm. Media mới luôn ở trạng thái chưa xuất bản.</p>
-                <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
-                  <input type="hidden" name="return_to" value={returnTo} />
-                  <select name="bucket" required aria-label="Bucket" className={adminInput}><option>hero</option><option>branches</option><option>community</option><option>hall-of-fame</option><option>members</option></select>
-                  <input name="image_key" placeholder="Khóa ảnh, ví dụ hero-main" aria-label="Khóa ảnh" required className={adminInput} />
-                  <input name="alt_text" placeholder="Mô tả ảnh" aria-label="Mô tả ảnh" required className={adminInput} />
-                  <input name="file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="File ảnh" required className={`${adminInput} py-2.5`} />
-                  <button className={`${adminButton} md:col-span-2`}>Upload lên Storage</button>
-                </form>
-              </section>
+            {activeModule === "overview" ? (
+              <Overview
+                newComplaints={newComplaints}
+                quickActions={[
+                  { href: "/admin/dashboard?module=leaderboard", label: "Nhập xếp hạng tuần này" },
+                  { href: "/admin/dashboard?module=tournaments&edit=new", label: "Thêm giải đấu" },
+                  { href: "/admin/dashboard?module=promotions&edit=new", label: "Thêm khuyến mãi" },
+                  { href: "/admin/dashboard?module=media", label: "Đổi ảnh hoặc video đầu trang" },
+                ]}
+                groups={moduleGroups.map((group) => ({ label: group.label, items: group.keys.map((key) => ({ key, label: moduleByKey[key].label, count: counts?.[key] ?? null })) }))}
+              />
             ) : null}
 
-            {resource && !faqNeedsMigration && !leaderboardNeedsMigration && !complaintsNeedMigration ? (
+            {activeModule === "leaderboard" && !params.edit && !needsMigration ? <LeaderboardQuickEntry branches={data?.branches ?? []} returnTo={moduleHref} /> : null}
+
+            {activeModule === "media" && !params.edit ? (
+              <details className="rounded-xl bg-panel p-5 sm:p-6">
+                <summary className="cursor-pointer py-1 text-lg font-extrabold text-white">Tải ảnh mới lên nhanh</summary>
+                <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-300">Ảnh tải lên ở đây chưa hiển thị. Hãy mở dòng ảnh trong danh sách bên dưới rồi bật Hiển thị.</p>
+                <form action={uploadImage} className="mt-5 grid gap-3 md:grid-cols-2">
+                  <input type="hidden" name="return_to" value={moduleHref} />
+                  <select name="bucket" required aria-label="Nhóm ảnh" className={adminInput}><option value="hero">Ảnh đầu trang</option><option value="branches">Cơ sở</option><option value="community">Cộng đồng</option><option value="hall-of-fame">Vinh danh</option><option value="members">Hội viên</option></select>
+                  <input name="image_key" placeholder="Vị trí, ví dụ hero-main" aria-label="Vị trí ảnh" required className={adminInput} />
+                  <input name="alt_text" placeholder="Mô tả ảnh" aria-label="Mô tả ảnh" required className={adminInput} />
+                  <input name="file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="File ảnh" required className={`${adminInput} py-2.5`} />
+                  <button className={`${adminButton} md:col-span-2`}>Tải lên</button>
+                </form>
+              </details>
+            ) : null}
+
+            {resource && data && !needsMigration ? (
               <>
-                <FilterBar module={activeModule} q={q} filter={filter} />
+                {!params.edit ? <ListToolbar module={activeModule} q={q} filter={filter} filters={filtersFor(resource)} /> : null}
                 <ResourceManager
-                  title={currentModule.title}
+                  title={current.title}
+                  hint={current.hint}
                   resource={resource}
                   fields={resource === "leaderboard_entries" ? leaderboardFields(data.branches) : moduleFields[resource]}
                   records={records}
+                  selected={data.selected}
+                  editing={Boolean(params.edit)}
+                  creating={params.edit === "new"}
                   moduleHref={moduleHref}
-                  returnTo={returnTo}
-                  selectedId={selectedEdit}
-                  note={resource === "tournaments" ? "Chi tiết giải đấu nhập tại đây và chỉ hiển thị ở section Giải đấu hoặc trang /giai-dau/[slug]. Community chỉ dùng mô tả game ngắn." : resource === "promotions" ? "Chọn đúng loại chương trình. Combo dùng Giá combo + Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp, không nhập JSON và không dùng nhãn Giá." : resource === "site_images" ? "Hero đầu trang dùng khóa hero-main. Chọn Ảnh hoặc Video; video nên là MP4/WebM 5–12 giây, tắt âm và có poster/ảnh fallback." : resource === "faq_items" ? "Mỗi bản ghi là một câu hỏi và câu trả lời. Chỉ nội dung đã xác minh và đang hiển thị mới xuất hiện ngoài website." : undefined}
-               
+                  addLabel={current.addLabel}
+                  truncated={data.truncated}
                 />
               </>
             ) : null}
