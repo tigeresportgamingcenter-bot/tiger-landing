@@ -172,7 +172,8 @@ export async function login(formData: FormData) {
   if (!email || !password) redirect("/admin/login?error=credentials");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/admin/login?error=credentials");
+  // Only a rejected email or password is "credentials". A network or key problem is a different message, so it is not mistaken for a typo.
+  if (error) redirect(`/admin/login?error=${error.status === 400 || error.code === "invalid_credentials" ? "credentials" : "unavailable"}`);
   const { data: { user } } = await supabase.auth.getUser();
   const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user?.id ?? "").maybeSingle();
   if (!membership) {

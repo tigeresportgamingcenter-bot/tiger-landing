@@ -10,6 +10,7 @@ const errors: Record<string, string> = {
   config: "Supabase chưa được cấu hình. Vui lòng thêm biến môi trường trước.",
   credentials: "Email hoặc mật khẩu không đúng.",
   permission: "Tài khoản này chưa được cấp quyền quản trị.",
+  unavailable: "Không kết nối được máy chủ dữ liệu, nên chưa thể đăng nhập. Mật khẩu của bạn chưa bị kiểm tra. Hãy thử lại sau ít phút hoặc báo người quản lý kỹ thuật.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
