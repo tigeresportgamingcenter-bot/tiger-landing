@@ -20,19 +20,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const filter = params.filter ?? "all";
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
-  const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
-  if (!membership) redirect("/admin/login?error=permission");
 
+  // One round trip: who is signed in, are they an admin, and the data for the active section.
+  // Row level security still applies to every query, and anyone who is not an admin is redirected below.
   // Only the active section is loaded. The overview uses count-only requests, so it stays fast as content grows.
   const current = moduleByKey[activeModule];
   const resource = current.resource;
-  const [newComplaints, counts, data] = await Promise.all([
+  const [{ data: { user } }, adminCheck, newComplaints, counts, data] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.rpc("is_admin"),
     loadNewComplaintCount(supabase),
     activeModule === "overview" ? loadCounts(supabase) : Promise.resolve(null),
     resource ? loadModule(supabase, current, params.edit) : Promise.resolve(null),
   ]);
+  if (!user) redirect("/admin/login");
+  if (adminCheck.data !== true) redirect("/admin/login?error=permission");
 
   const notice = resource ? migrationNotices[resource] : undefined;
   const needsMigration = Boolean(notice && data?.error);

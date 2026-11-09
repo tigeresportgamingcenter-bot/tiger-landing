@@ -159,10 +159,9 @@ function validateCommon(formData: FormData) {
 async function requireAdmin() {
   if (!isSupabaseConfigured()) redirect("/admin/login?error=config");
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const [{ data: { user } }, adminCheck] = await Promise.all([supabase.auth.getUser(), supabase.rpc("is_admin")]);
   if (!user) redirect("/admin/login");
-  const { data: membership } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
-  if (!membership) redirect("/admin/login?error=permission");
+  if (adminCheck.data !== true) redirect("/admin/login?error=permission");
   return supabase;
 }
 
