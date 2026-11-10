@@ -4,10 +4,10 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { complaintStatuses } from "@/lib/complaints";
+import { gearCategories, gearPriceUnits } from "@/lib/gear";
 import { createClient } from "@/lib/supabase/server";
 
-const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items", "leaderboard_entries", "complaints"] as const;
+const resources = ["branches", "promotions", "tournaments", "hall_of_fame_members", "site_images", "gallery_items", "pc_tiers", "faq_items", "leaderboard_entries", "gear_items"] as const;
 type Resource = (typeof resources)[number];
 const buckets = ["hero", "branches", "community", "hall-of-fame", "members"] as const;
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -17,7 +17,7 @@ function imageBucket(resource: Resource, formData: FormData) {
   if (resource === "branches") return "branches";
   if (resource === "tournaments") return "hall-of-fame";
   if (resource === "hall_of_fame_members") return "members";
-  if (resource === "promotions") return "community";
+  if (resource === "promotions" || resource === "gear_items") return "community";
   if (resource === "gallery_items") return text(formData, "bucket");
   if (resource === "site_images") return "hero";
   return null;
@@ -216,12 +216,12 @@ function buildPayload(resource: Resource, formData: FormData): Record<string, un
     const honorMonth = text(formData, "honor_month");
     return { ...common, display_name: text(formData, "display_name"), tier: text(formData, "tier"), period_label: honorMonth ? `Tháng ${honorMonth.slice(5, 7)}/${honorMonth.slice(0, 4)}` : null, honor_month: honorMonth ? `${honorMonth}-01` : null, member_points: Math.max(0, Number(text(formData, "member_points") ?? 0)), note: text(formData, "note"), sort_order: Number(text(formData, "sort_order") ?? 0), image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), consent_confirmed: checked(formData, "consent_confirmed") };
   }
-  if (resource === "complaints") {
-    const status = text(formData, "status");
-    if (!complaintStatuses.some((item) => item.value === status)) throw new Error("invalid-complaint-status");
-    const publicResponse = text(formData, "public_response");
-    const closed = status === "resolved" || status === "rejected";
-    return { status, assigned_to: text(formData, "assigned_to"), internal_note: text(formData, "internal_note"), public_response: publicResponse, responded_at: publicResponse ? new Date().toISOString() : null, resolved_at: closed ? new Date().toISOString() : null };
+  if (resource === "gear_items") {
+    const price = numberOrNull(formData, "price");
+    if (price !== null && (!Number.isFinite(price) || price < 0)) throw new Error("invalid-gear-price");
+    const category = text(formData, "category");
+    const priceUnit = text(formData, "price_unit");
+    return { ...common, name: text(formData, "name"), category: gearCategories.some((item) => item.value === category) ? category : "other", price: price === null ? null : Math.round(price), price_unit: gearPriceUnits.some((item) => item.value === priceUnit) ? priceUnit : "hour", out_of_stock: checked(formData, "out_of_stock"), description: text(formData, "description"), specs: repeatedText(formData, "spec", 5), note: text(formData, "note"), branch_scope: text(formData, "branch_scope"), image_url: text(formData, "image_url"), image_alt: text(formData, "image_alt"), sort_order: Number(text(formData, "sort_order") ?? 0) };
   }
   if (resource === "leaderboard_entries") {
     if (checked(formData, "published") && !checked(formData, "consent_confirmed")) throw new Error("member-consent-required");
@@ -248,7 +248,6 @@ export async function saveContent(formData: FormData) {
   if (!resource || !resources.includes(resource)) return;
   const supabase = await requireAdmin();
   const id = text(formData, "id");
-  if (resource === "complaints" && !id) redirect(dashboardReturn(formData, "saved", "complaint-create-blocked"));
   let uploadedMedia: Array<{ bucket: string; objectPath: string }> = [];
   let payload: Record<string, unknown>;
   let promotionTiers: ReturnType<typeof promotionTierPayload> = [];

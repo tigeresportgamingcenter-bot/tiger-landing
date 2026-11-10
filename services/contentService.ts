@@ -51,6 +51,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     tournamentEvents: [],
     completedTournamentEvents: [],
     faqItems,
+    gearItems: [],
   };
 
   try {
@@ -78,6 +79,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       tournamentEvents: remote.tournamentEvents ?? fallback.tournamentEvents,
       completedTournamentEvents: remote.completedTournamentEvents ?? fallback.completedTournamentEvents,
       faqItems: remote.faqItems ?? fallback.faqItems,
+      gearItems: remote.gearItems ?? fallback.gearItems,
     };
   } catch {
     return withOptionalDemo(fallback);
