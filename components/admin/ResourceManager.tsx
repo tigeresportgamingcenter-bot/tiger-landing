@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { saveContent } from "@/app/admin/actions";
-import { complaintStatusLabel } from "@/lib/complaints";
 import type { AdminField, AdminRecord } from "@/lib/admin/types";
 import { DeleteContentButton } from "./DeleteContentButton";
 import { MediaUploadField } from "./MediaUploadField";
@@ -33,19 +32,18 @@ const groupLabels: Record<Exclude<NonNullable<AdminField["group"]>, "visibility"
 };
 
 function recordLabel(record: AdminRecord) {
-  if (typeof record.code === "string" && typeof record.customer_name === "string") return `${record.code} · ${record.customer_name}`;
   if (typeof record.branch_slug === "string" && typeof record.period_type === "string") return `#${String(record.rank ?? "")} ${String(record.display_name ?? "")} · ${record.branch_slug} · ${record.period_type === "week" ? "Tuần" : "Tháng"} ${String(record.period_start ?? "")}`;
   return String(record.name ?? record.display_name ?? record.title ?? record.question ?? record.image_key ?? record.slug ?? record.id);
 }
 
 function recordStatus(record: AdminRecord, resource: string) {
-  if (resource === "complaints") return complaintStatusLabel(String(record.status ?? "new"));
   const live = Boolean(record.published && record.verified);
   const expired = typeof record.valid_until === "string" && record.valid_until < new Date().toISOString().slice(0, 10);
 
   if (resource === "tournaments" && record.registration_open) return "Đang mở đăng ký";
   if (resource === "tournaments" && record.status === "completed") return "Đã kết thúc";
   if (expired) return "Hết hạn";
+  if (resource === "gear_items" && live && record.out_of_stock) return "Tạm hết";
   if (live && record.featured) return "Nổi bật";
   if (live) return "Đang hiển thị";
   if (record.verified) return "Đã kiểm tra";
@@ -53,23 +51,13 @@ function recordStatus(record: AdminRecord, resource: string) {
 }
 
 function pillClass(label: string) {
-  if (label === "Mới tiếp nhận") return "bg-accent text-ground";
-  if (label === "Hết hạn" || label === "Đã từ chối") return "bg-red-500/20 text-red-200";
-  if (["Nổi bật", "Đang hiển thị", "Đang mở đăng ký", "Đã giải quyết"].includes(label)) return "bg-accent/20 text-[#e0c2ff]";
+  if (label === "Hết hạn") return "bg-red-500/20 text-red-200";
+  if (["Nổi bật", "Đang hiển thị", "Đang mở đăng ký"].includes(label)) return "bg-accent/20 text-[#e0c2ff]";
   return "bg-white/10 text-zinc-200";
 }
 
 function Field({ field, record, resource }: { field: AdminField; record?: AdminRecord; resource: string }) {
   const value = record?.[field.name];
-
-  if (field.type === "readonly") {
-    return (
-      <div data-admin-field={field.name} className="md:col-span-2">
-        <p className={adminLabel}>{field.label}</p>
-        <p className="mt-1 whitespace-pre-line rounded-lg bg-ground px-3 py-3 text-base leading-7 text-zinc-100">{String(value ?? "") || "—"}</p>
-      </div>
-    );
-  }
 
   if (field.type === "image" || field.type === "video") {
     return <MediaUploadField name={field.name} label={field.label} kind={field.type} resource={resource} currentUrl={typeof value === "string" ? value : ""} required={field.required} />;
@@ -233,7 +221,7 @@ export function ResourceManager({ title, hint, resource, fields, records, select
           <h2 className="font-display text-4xl uppercase leading-none text-white">{title}</h2>
           {hint ? <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-300">{hint}</p> : null}
         </div>
-        {resource === "complaints" || editing ? null : <Link href={`${moduleHref}&edit=new`} className={adminButton}>{addLabel ?? "Thêm mới"}</Link>}
+        {editing ? null : <Link href={`${moduleHref}&edit=new`} className={adminButton}>{addLabel ?? "Thêm mới"}</Link>}
       </div>
 
       <div className={editing ? "grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)]" : ""}>

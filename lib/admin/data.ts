@@ -1,4 +1,3 @@
-import { complaintCategoryLabel } from "@/lib/complaints";
 import type { createClient } from "@/lib/supabase/server";
 import { modules } from "./config";
 import type { AdminModuleConfig, AdminRecord } from "./types";
@@ -7,12 +6,6 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const listLimit = 200;
-
-/** Number of complaints nobody has looked at yet. One tiny query, safe when the table does not exist. */
-export async function loadNewComplaintCount(supabase: Supabase) {
-  const { count, error } = await supabase.from("complaints").select("id", { count: "exact", head: true }).eq("status", "new");
-  return error ? 0 : count ?? 0;
-}
 
 /** Row counts for the overview only. Head requests return no rows, so this stays fast. */
 export async function loadCounts(supabase: Supabase) {
@@ -78,12 +71,9 @@ function normalizeRecord(resource: string, record: AdminRecord, promotionTiers: 
       ...Object.fromEntries([0, 1, 2, 3, 4].map((index) => [`highlight_${index + 1}`, highlights[index] ?? ""])),
     };
   }
-  if (resource === "complaints") {
-    return {
-      ...record,
-      category: complaintCategoryLabel(String(record.category ?? "")),
-      created_at: typeof record.created_at === "string" ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(record.created_at)) : "",
-    };
+  if (resource === "gear_items") {
+    const specs = strings(record.specs);
+    return { ...record, ...Object.fromEntries([0, 1, 2, 3, 4].map((index) => [`spec_${index + 1}`, specs[index] ?? ""])) };
   }
   if (resource === "hall_of_fame_members") {
     return { ...record, honor_month: typeof record.honor_month === "string" ? record.honor_month.slice(0, 7) : "" };
@@ -94,7 +84,6 @@ function normalizeRecord(resource: string, record: AdminRecord, promotionTiers: 
 export interface ListFilter { value: string; label: string }
 
 export function filtersFor(resource: string): ListFilter[] {
-  if (resource === "complaints") return [{ value: "all", label: "Tất cả" }, { value: "new", label: "Mới" }, { value: "in_progress", label: "Đang xử lý" }, { value: "resolved", label: "Đã giải quyết" }];
   if (resource === "tournaments") return [{ value: "all", label: "Tất cả" }, { value: "registration_open", label: "Mở đăng ký" }, { value: "completed", label: "Đã kết thúc" }, { value: "draft", label: "Nháp" }];
   return [{ value: "all", label: "Tất cả" }, { value: "published", label: "Đang hiển thị" }, { value: "draft", label: "Nháp" }];
 }
@@ -105,14 +94,13 @@ function matchesFilter(record: AdminRecord, resource: string, filter: string) {
   if (filter === "published") return live;
   if (filter === "draft") return !live;
   if (filter === "registration_open") return Boolean(record.registration_open);
-  if (resource === "complaints") return String(record.status ?? "new") === filter;
   return record.status === filter;
 }
 
 export function filterRecords(records: AdminRecord[], resource: string, q: string, filter: string) {
   const needle = q.trim().toLowerCase();
   return records.filter((record) => {
-    const haystack = [record.name, record.title, record.display_name, record.question, record.code, record.customer_name, record.slug, record.image_key, record.branch_slug]
+    const haystack = [record.name, record.title, record.display_name, record.question, record.slug, record.image_key, record.branch_slug]
       .map((item) => String(item ?? "").toLowerCase()).join(" ");
     return (!needle || haystack.includes(needle)) && matchesFilter(record, resource, filter);
   });

@@ -5,7 +5,7 @@ import { LeaderboardQuickEntry } from "@/components/admin/LeaderboardQuickEntry"
 import { ResourceManager } from "@/components/admin/ResourceManager";
 import { adminButton, adminInput } from "@/components/admin/styles";
 import { errorMessages, leaderboardFields, migrationNotices, moduleByKey, moduleFields, moduleGroups, modules } from "@/lib/admin/config";
-import { filterRecords, filtersFor, loadCounts, loadModule, loadNewComplaintCount } from "@/lib/admin/data";
+import { filterRecords, filtersFor, loadCounts, loadModule } from "@/lib/admin/data";
 import type { ModuleKey } from "@/lib/admin/types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -26,10 +26,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Only the active section is loaded. The overview uses count-only requests, so it stays fast as content grows.
   const current = moduleByKey[activeModule];
   const resource = current.resource;
-  const [{ data: { user } }, adminCheck, newComplaints, counts, data] = await Promise.all([
+  const [{ data: { user } }, adminCheck, counts, data] = await Promise.all([
     supabase.auth.getUser(),
     supabase.rpc("is_admin"),
-    loadNewComplaintCount(supabase),
     activeModule === "overview" ? loadCounts(supabase) : Promise.resolve(null),
     resource ? loadModule(supabase, current, params.edit) : Promise.resolve(null),
   ]);
@@ -58,17 +57,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-4 lg:self-start">
-            <AdminNav groups={navGroups} active={activeModule} badges={{ complaints: newComplaints }} />
+            <AdminNav groups={navGroups} active={activeModule} />
           </aside>
 
           <section className="min-w-0 space-y-5">
             {activeModule === "overview" ? (
               <Overview
-                newComplaints={newComplaints}
                 quickActions={[
                   { href: "/admin/dashboard?module=leaderboard", label: "Nhập xếp hạng tuần này" },
                   { href: "/admin/dashboard?module=tournaments&edit=new", label: "Thêm giải đấu" },
                   { href: "/admin/dashboard?module=promotions&edit=new", label: "Thêm khuyến mãi" },
+                  { href: "/admin/dashboard?module=gear&edit=new", label: "Thêm thiết bị cho thuê" },
                   { href: "/admin/dashboard?module=media", label: "Đổi ảnh hoặc video đầu trang" },
                 ]}
                 groups={moduleGroups.map((group) => ({ label: group.label, items: group.keys.map((key) => ({ key, label: moduleByKey[key].label, count: counts?.[key] ?? null })) }))}

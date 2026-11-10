@@ -3,6 +3,7 @@ import { ComplaintSection } from "@/components/sections/ComplaintSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { DealsSection } from "@/components/sections/DealsSection";
 import { Footer } from "@/components/sections/Footer";
+import { GearSection } from "@/components/sections/GearSection";
 import { Header } from "@/components/sections/Header";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { MobileCtaBar } from "@/components/sections/MobileCtaBar";
@@ -23,8 +24,9 @@ export default async function HomePage() {
       <main>
         <HeroSection content={content.heroContent} branches={content.branches} minPricePerHour={minPricePerHour} hotline={hotline} />
         <DealsSection tiers={content.pcTiers} pricing={content.pricing} promotions={content.promotions} upcomingPromotions={content.upcomingPromotions} actionHref={contactAction} />
+        <GearSection items={content.gearItems} actionHref={contactAction} />
         <ArenaSection events={content.tournamentEvents} completedEvents={content.completedTournamentEvents} hallOfFame={content.hallOfFame} leaderboard={content.leaderboard} branches={content.branches} games={content.tournaments} galleryItems={content.galleryItems} communityUrl={content.socialLinks.facebook} />
-        <ComplaintSection hotline={hotline} />
+        <ComplaintSection formUrl={content.socialLinks.complaintForm} hotline={hotline} zaloHref={content.socialLinks.zalo} />
         <ContactSection socialLinks={content.socialLinks} content={content.contactContent} image={contactImage} faqItems={content.faqItems} />
       </main>
       <Footer />

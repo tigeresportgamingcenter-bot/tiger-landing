@@ -1,4 +1,4 @@
-import { complaintStatuses } from "@/lib/complaints";
+import { gearCategories, gearPriceUnits } from "@/lib/gear";
 import type { AdminField, AdminModuleConfig, ModuleKey } from "./types";
 
 const visibility: AdminField[] = [
@@ -166,18 +166,24 @@ export function leaderboardFields(branches: Array<{ slug: string; name: string }
   ];
 }
 
-const complaintFields: AdminField[] = [
-  { name: "code", label: "Mã khiếu nại", type: "readonly" },
-  { name: "created_at", label: "Gửi lúc", type: "readonly" },
-  { name: "customer_name", label: "Khách hàng", type: "readonly" },
-  { name: "phone", label: "Số điện thoại", type: "readonly" },
-  { name: "branch_slug", label: "Cơ sở", type: "readonly" },
-  { name: "category", label: "Nhóm vấn đề", type: "readonly" },
-  { name: "content", label: "Nội dung phản ánh", type: "readonly" },
-  { name: "status", label: "Trạng thái xử lý", type: "select", options: complaintStatuses.map((item) => ({ value: item.value, label: item.label })), group: "details" },
-  { name: "public_response", label: "Phản hồi gửi khách (khách xem được khi tra cứu)", type: "textarea", group: "details" },
-  { name: "assigned_to", label: "Người phụ trách", group: "details" },
-  { name: "internal_note", label: "Ghi chú nội bộ (khách không thấy)", type: "textarea", group: "details" },
+const gearFields: AdminField[] = [
+  { name: "name", label: "Tên thiết bị", required: true },
+  { name: "category", label: "Loại", type: "select", options: gearCategories },
+  { name: "price", label: "Giá thuê (đồng). Để trống nếu muốn khách hỏi giá tại quầy", type: "number" },
+  { name: "price_unit", label: "Tính giá theo", type: "select", options: gearPriceUnits },
+  { name: "out_of_stock", label: "Tạm hết (vẫn hiện trên website, ghi chú Tạm hết)", type: "checkbox" },
+  { name: "description", label: "Vì sao nên thuê (ưu điểm, khách được trải nghiệm gì)", type: "textarea", group: "details" },
+  { name: "spec_1", label: "Thông số 1 (ví dụ: Nhẹ chỉ 60 g)", group: "details" },
+  { name: "spec_2", label: "Thông số 2", group: "details" },
+  { name: "spec_3", label: "Thông số 3", group: "details" },
+  { name: "spec_4", label: "Thông số 4", group: "details" },
+  { name: "spec_5", label: "Thông số 5", group: "details" },
+  { name: "note", label: "Ghi chú riêng cho món này (nếu có)", group: "details" },
+  { name: "branch_scope", label: "Cơ sở có sẵn", group: "details" },
+  { name: "image_url", label: "Ảnh thiết bị", type: "image", group: "media" },
+  { name: "image_alt", label: "Mô tả ảnh (tự lấy tên thiết bị nếu để trống)", group: "media" },
+  sortField,
+  ...visibility,
 ];
 
 export const moduleFields: Record<string, AdminField[]> = {
@@ -189,7 +195,7 @@ export const moduleFields: Record<string, AdminField[]> = {
   pc_tiers: pcTierFields,
   gallery_items: galleryFields,
   faq_items: faqFields,
-  complaints: complaintFields,
+  gear_items: gearFields,
 };
 
 const flags = "published, verified";
@@ -199,19 +205,18 @@ export const modules: AdminModuleConfig[] = [
   { key: "branches", label: "Cơ sở", title: "Cơ sở", resource: "branches", listColumns: `id, slug, name, ${flags}`, addLabel: "Thêm cơ sở" },
   { key: "faq", label: "Câu hỏi thường gặp", title: "Câu hỏi thường gặp", resource: "faq_items", hint: "Mỗi dòng là một câu hỏi và câu trả lời. Chỉ nội dung đang hiển thị mới ra website.", listColumns: `id, question, ${flags}`, addLabel: "Thêm câu hỏi" },
   { key: "promotions", label: "Khuyến mãi", title: "Khuyến mãi", resource: "promotions", hint: "Combo dùng Giá combo và Quyền lợi. Ưu đãi nạp tiền dùng Bảng mốc nạp.", listColumns: `id, slug, name, valid_until, featured, ${flags}`, addLabel: "Thêm khuyến mãi" },
+  { key: "gear", label: "Cho thuê gear", title: "Cho thuê gear", resource: "gear_items", hint: "Chuột, bàn phím, tai nghe, tay cầm... khách có thể thuê tại quầy. Không nhập giá thì website ghi Hỏi giá tại quầy.", listColumns: `id, name, category, price, price_unit, out_of_stock, ${flags}`, addLabel: "Thêm thiết bị" },
   { key: "pc_tiers", label: "Dàn máy, cấu hình", title: "Dàn máy và cấu hình", resource: "pc_tiers", listColumns: `id, slug, name, featured, ${flags}`, addLabel: "Thêm hạng máy" },
   { key: "tournaments", label: "Giải đấu", title: "Giải đấu", resource: "tournaments", hint: "Giải hiển thị ở mục Đấu trường theo game và theo trạng thái.", listColumns: `id, slug, name, game, status, registration_open, featured, ${flags}`, addLabel: "Thêm giải đấu" },
   { key: "leaderboard", label: "Xếp hạng tuần, tháng", title: "Xếp hạng người chơi", resource: "leaderboard_entries", hint: "Top 5 mỗi cơ sở theo tuần hoặc tháng. Dùng ô nhập nhanh để điền cả 5 người một lần.", listColumns: `id, branch_slug, period_type, period_start, rank, display_name, points, ${flags}`, addLabel: "Thêm một dòng" },
   { key: "honors", label: "Vinh danh", title: "Hội viên vinh danh", resource: "hall_of_fame_members", listColumns: `id, display_name, tier, ${flags}`, addLabel: "Thêm hội viên" },
   { key: "gallery", label: "Thư viện ảnh", title: "Thư viện ảnh", resource: "gallery_items", listColumns: `id, title, media_type, ${flags}`, addLabel: "Thêm ảnh hoặc video" },
-  { key: "complaints", label: "Khiếu nại", title: "Khiếu nại khách hàng", resource: "complaints", hint: "Khách gửi từ trang Khiếu nại. Bạn đổi trạng thái và viết phản hồi tại đây.", listColumns: "id, code, customer_name, status, created_at" },
 ];
 
 export const moduleGroups: Array<{ label: string; keys: ModuleKey[] }> = [
   { label: "Trang chủ", keys: ["media", "branches", "faq"] },
-  { label: "Giá và ưu đãi", keys: ["promotions", "pc_tiers"] },
+  { label: "Giá và ưu đãi", keys: ["promotions", "pc_tiers", "gear"] },
   { label: "Đấu trường", keys: ["tournaments", "leaderboard", "honors", "gallery"] },
-  { label: "Khách hàng", keys: ["complaints"] },
 ];
 
 export const errorMessages: Record<string, string> = {
@@ -229,8 +234,6 @@ export const errorMessages: Record<string, string> = {
   "registration-url-required": "Giải mở đăng ký bắt buộc có link đăng ký.",
   "member-consent-required": "Chưa thể hiển thị khi người chơi chưa đồng ý công khai. Hãy tích ô đồng ý.",
   "invalid-promotion-tier": "Mốc nạp phải có mức nạp lớn hơn 0, khách nhận lớn hơn 0 và không nhỏ hơn mức nạp.",
-  "invalid-complaint-status": "Trạng thái xử lý không hợp lệ.",
-  "complaint-create-blocked": "Khiếu nại chỉ do khách gửi, không tạo mới trong admin.",
   "invalid-leaderboard-rank": "Hạng phải là số nguyên từ 1 đến 5.",
   "invalid-leaderboard-branch": "Hãy chọn cơ sở.",
   "invalid-leaderboard-name": "Nickname tối đa 40 ký tự.",
@@ -238,12 +241,13 @@ export const errorMessages: Record<string, string> = {
   "leaderboard-empty": "Hãy nhập ít nhất một người chơi.",
   "invalid-period-start": "Cần chọn ngày hợp lệ để xác định tuần hoặc tháng.",
   "invalid-combo-price": "Combo giờ chơi cần nhập Giá combo lớn hơn 0.",
+  "invalid-gear-price": "Giá thuê phải là số từ 0 trở lên, hoặc để trống.",
 };
 
 export const migrationNotices: Record<string, { module: ModuleKey; file: string; name: string }> = {
   faq_items: { module: "faq", file: "20260701_faq_admin_cms.sql", name: "Câu hỏi thường gặp" },
   leaderboard_entries: { module: "leaderboard", file: "20261109_lol_game_and_leaderboard.sql", name: "Xếp hạng" },
-  complaints: { module: "complaints", file: "20261109_complaints.sql", name: "Khiếu nại" },
+  gear_items: { module: "gear", file: "20261110_gear_rentals.sql", name: "Cho thuê gear" },
 };
 
 export const moduleByKey = Object.fromEntries(modules.map((module) => [module.key, module])) as Record<ModuleKey, AdminModuleConfig>;

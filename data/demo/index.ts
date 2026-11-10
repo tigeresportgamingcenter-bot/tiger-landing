@@ -1,4 +1,4 @@
-import type { ContentImage, GalleryItem, LeaderboardEntry, Promotion, SiteContent, SupportedGame, TournamentEvent, TournamentStatus } from "@/types";
+import type { ContentImage, GalleryItem, GearItem, LeaderboardEntry, Promotion, SiteContent, SupportedGame, TournamentEvent, TournamentStatus } from "@/types";
 
 const tournamentImage: ContentImage = { src: "/images/community/tournament.webp", alt: "Giải đấu tại Tiger Esports" };
 const fcImage: ContentImage = { src: "/images/hall-of-fame/tournament-fc-2026.webp", alt: "Giải FC Online tại Tiger Esports" };
@@ -49,6 +49,14 @@ const upcomingPromotion: Promotion = {
   featured: false, image: null, branchScope: "Tất cả cơ sở", validFrom: "2026-12-01", validUntil: null, tiers: [],
 };
 
+const demoGear: GearItem[] = [
+  { id: "demo-gear-mouse", name: "Chuột gaming (demo)", category: "mouse", description: "Chuột nhẹ, cảm biến chính xác cho FPS.", specs: ["Nhẹ chỉ 60 g", "Không dây, pin tới 95 giờ"], price: 10000, priceUnit: "hour", note: null, branchScope: "Tất cả cơ sở", image: null, available: true },
+  { id: "demo-gear-mouse-2", name: "Chuột không dây (demo)", category: "mouse", description: "Không dây, pin dùng cả ngày.", specs: [], price: 25000, priceUnit: "day", note: "Cần để lại giấy tờ", branchScope: null, image: null, available: false },
+  { id: "demo-gear-keyboard", name: "Bàn phím cơ (demo)", category: "keyboard", description: "Switch đỏ, đèn nền RGB.", specs: ["Switch từ Hall Effect", "Rapid Trigger 0,1 mm"], price: 15000, priceUnit: "hour", note: null, branchScope: null, image: null, available: true },
+  { id: "demo-gear-headset", name: "Tai nghe gaming (demo)", category: "headset", description: "Âm thanh vòm 7.1, mic khử ồn.", specs: [], price: null, priceUnit: "hour", note: null, branchScope: "Tiger 3, Tiger 4", image: null, available: true },
+  { id: "demo-gear-pad", name: "Tay cầm chơi game (demo)", category: "controller", description: "Dùng cho FC Online và game đối kháng.", specs: [], price: 20000, priceUnit: "turn", note: null, branchScope: null, image: null, available: true },
+];
+
 export const demoTournaments = [...events, ...completedEvents];
 
 export function withDemoContent(content: SiteContent): SiteContent {
@@ -61,5 +69,6 @@ export function withDemoContent(content: SiteContent): SiteContent {
     leaderboard: content.branches.flatMap((branch, index) => [...board("week", "2026-11-02", branch.id, index), ...board("month", "2026-11-01", branch.id, index)]),
     galleryItems,
     upcomingPromotions: [upcomingPromotion],
+    gearItems: demoGear,
   };
 }

@@ -85,6 +85,26 @@ export interface PromotionTier {
   sortOrder: number;
 }
 
+export type GearCategory = "mouse" | "keyboard" | "headset" | "controller" | "mousepad" | "combo" | "other";
+export type GearPriceUnit = "hour" | "day" | "turn";
+
+export interface GearItem {
+  id: string;
+  name: string;
+  category: GearCategory;
+  /** Why a customer should rent it, in plain words. */
+  description: string | null;
+  /** Short spec lines, for example "Nhẹ chỉ 60 g". */
+  specs: string[];
+  /** Price in VND for one price unit. Null means "ask at the counter". */
+  price: number | null;
+  priceUnit: GearPriceUnit;
+  note: string | null;
+  branchScope: string | null;
+  image: ContentImage | null;
+  available: boolean;
+}
+
 export interface Tournament {
   id: string;
   game: string;
@@ -181,6 +201,8 @@ export interface SocialLinks {
   zalo: string | null;
   hotline: string | null;
   googleMaps: string | null;
+  /** Public Google Form for complaints. Null until the shop publishes one. */
+  complaintForm: string | null;
 }
 
 export interface SiteSettings {
@@ -255,4 +277,5 @@ export interface SiteContent {
   tournamentEvents: TournamentEvent[];
   completedTournamentEvents: TournamentEvent[];
   faqItems: FaqItem[];
+  gearItems: GearItem[];
 }

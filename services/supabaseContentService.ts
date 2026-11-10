@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
+import { gearCategories, gearPriceUnits } from "@/lib/gear";
 import { supportedGames } from "@/lib/games";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
-import type { Branch, LeaderboardEntry, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
+import type { Branch, LeaderboardEntry, ChampionPlacement, ContentImage, ContentVideo, FaqItem, GalleryItem, GearItem, HallOfFameContent, HallOfFameTournament, HonoredMember, MediaProvider, MemberTier, PcTier, Promotion, PromotionTier, SupportedGame, Tournament, TournamentEvent, TournamentStatus } from "@/types";
 
 export interface SupabaseContent {
   branches?: Branch[];
@@ -20,6 +21,7 @@ export interface SupabaseContent {
   tournamentEvents?: TournamentEvent[];
   completedTournamentEvents?: TournamentEvent[];
   faqItems?: FaqItem[];
+  gearItems?: GearItem[];
 }
 
 const games = supportedGames;
@@ -156,7 +158,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
   const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const today = todayInVietnam();
 
-  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult, leaderboardResult] = await Promise.all([
+  const [branchResult, activePromotionResult, upcomingPromotionResult, tournamentResult, memberResult, imageResult, galleryResult, pcTierResult, faqResult, leaderboardResult, gearResult] = await Promise.all([
     supabase.from("branches").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).or(`valid_from.is.null,valid_from.lte.${today}`).or(`valid_until.is.null,valid_until.gte.${today}`).order("featured", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("promotions").select("*").eq("published", true).eq("verified", true).gt("valid_from", today).order("valid_from", { ascending: true }),
@@ -167,6 +169,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     supabase.from("pc_tiers").select("*").eq("published", true).eq("verified", true).order("sort_order"),
     supabase.from("faq_items").select("*").eq("published", true).eq("verified", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("leaderboard_entries").select("*").eq("published", true).eq("verified", true).eq("consent_confirmed", true).order("period_start", { ascending: false }).order("rank", { ascending: true }),
+    supabase.from("gear_items").select("*").eq("published", true).eq("verified", true).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
   ]);
 
   const branches: Branch[] = (branchResult.error ? [] : branchResult.data ?? []).map((row) => ({
@@ -271,6 +274,26 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     return [{ id: row.id, branchId: row.branch_slug, period: row.period_type, periodStart: row.period_start.slice(0, 10), rank, displayName: row.display_name.trim(), points: Math.max(0, Number(row.points ?? 0)) }];
   });
 
+  const gearItems: GearItem[] = (gearResult.error ? [] : gearResult.data ?? []).flatMap((row) => {
+    if (typeof row.id !== "string" || typeof row.name !== "string" || !row.name.trim()) return [];
+    const category = gearCategories.some((item) => item.value === row.category) ? row.category as GearItem["category"] : "other";
+    const priceUnit = gearPriceUnits.some((item) => item.value === row.price_unit) ? row.price_unit as GearItem["priceUnit"] : "hour";
+    const price = row.price === null || row.price === undefined ? null : Number(row.price);
+    return [{
+      id: row.id,
+      name: row.name.trim(),
+      category,
+      description: typeof row.description === "string" && row.description.trim() ? row.description.trim() : null,
+      specs: safeTextList(row.specs, 5),
+      price: price !== null && Number.isFinite(price) && price >= 0 ? price : null,
+      priceUnit,
+      note: typeof row.note === "string" && row.note.trim() ? row.note.trim() : null,
+      branchScope: typeof row.branch_scope === "string" && row.branch_scope.trim() ? row.branch_scope.trim() : null,
+      image: safeImage(row.image_url, typeof row.image_alt === "string" && row.image_alt.trim() ? row.image_alt : row.name),
+      available: row.out_of_stock !== true,
+    }];
+  });
+
   const statusPriority: Record<TournamentStatus, number> = { registration_open: 0, ongoing: 1, upcoming: 2, completed: 3 };
   const tournamentEvents = mappedEvents.filter((event) => event.status !== "completed").sort((a, b) => statusPriority[a.status] - statusPriority[b.status] || String(a.startsAt ?? a.heldOn ?? "").localeCompare(String(b.startsAt ?? b.heldOn ?? "")));
   const completedTournamentEvents = mappedEvents.filter((event) => event.status === "completed").sort((a, b) => String(b.heldOn ?? b.startsAt ?? "").localeCompare(String(a.heldOn ?? a.startsAt ?? "")));
@@ -292,6 +315,7 @@ export async function getSupabaseContent(): Promise<SupabaseContent | null> {
     tournamentEvents: tournamentEvents.length ? tournamentEvents : undefined,
     completedTournamentEvents: completedTournamentEvents.length ? completedTournamentEvents : undefined,
     faqItems: faqItems.length ? faqItems : undefined,
+    gearItems: gearItems.length ? gearItems : undefined,
   };
 }
 
