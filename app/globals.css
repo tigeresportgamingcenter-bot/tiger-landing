@@ -207,5 +207,10 @@ button:not(:disabled), a { -webkit-tap-highlight-color: transparent; }
 @media (min-width: 768px) { body { padding-bottom: 0; } }
 
 @keyframes launcher-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes launcher-rise { from { opacity: 0; transform: translateY(1.5rem); } to { opacity: 1; transform: none; } }
 .launcher-progress { transform-origin: left; animation: launcher-progress linear forwards; }
-@media (prefers-reduced-motion: reduce) { .launcher-progress { animation: none !important; transform: scaleX(1); } }
+.rise { opacity: 0; animation: launcher-rise .7s cubic-bezier(.22,1,.36,1) forwards; animation-delay: var(--d, 0ms); }
+@media (prefers-reduced-motion: reduce) {
+  .launcher-progress { animation: none !important; transform: scaleX(0); }
+  .rise { animation: none !important; opacity: 1; }
+}

@@ -42,5 +42,11 @@ export default async function LauncherPage() {
     registrationQr: Object.fromEntries(registrationEntries),
   };
 
-  return <LauncherShell data={data} />;
+  return (
+    <>
+      {/* Scale every rem with the screen so the board reads the same on a 1366 or a 2560 pixel monitor. */}
+      <style>{"html{font-size:max(8px,min(0.8333vw,1.4815vh))}body{padding-bottom:0}"}</style>
+      <LauncherShell data={data} />
+    </>
+  );
 }

@@ -1,9 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { TigerMark } from "@/components/ui/TigerMark";
-import { ComplaintSlide, PromotionsSlide, RankingSlide, ResultsSlide, TournamentsSlide } from "./LauncherSlides";
+import { useEffect, useMemo, useState } from "react";
+import { ComplaintSlide } from "./ComplaintSlide";
+import { PromotionsSlide } from "./PromotionsSlide";
+import { RankingSlide } from "./RankingSlide";
+import { ResultsSlide } from "./ResultsSlide";
+import { TournamentsSlide } from "./TournamentsSlide";
+import { dwellMs, hasContent } from "./slideKit";
 import type { LauncherData, SlideKey } from "./launcherTypes";
 
 declare global {
@@ -13,11 +17,10 @@ declare global {
   }
 }
 
-const AUTO_MS = 18_000;
 const MANUAL_MS = 60_000;
 const REFRESH_MS = 5 * 60_000;
 
-const tabs: Array<{ key: SlideKey; label: string }> = [
+const allTabs: Array<{ key: SlideKey; label: string }> = [
   { key: "promotions", label: "Ưu đãi" },
   { key: "tournaments", label: "Giải đấu" },
   { key: "results", label: "Tổng kết giải" },
@@ -30,36 +33,44 @@ function Clock() {
   useEffect(() => {
     const tick = () => setNow(new Date());
     tick();
-    const id = setInterval(tick, 30_000);
+    const id = setInterval(tick, 20_000);
     return () => clearInterval(id);
   }, []);
   if (!now) return null;
-  return <time className="text-3xl font-bold tabular-nums text-white" dateTime={now.toISOString()}>{new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Ho_Chi_Minh" }).format(now)}</time>;
+  const format = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("vi-VN", { ...options, timeZone: "Asia/Ho_Chi_Minh" }).format(now);
+  return (
+    <time className="text-right leading-none" dateTime={now.toISOString()}>
+      <span className="block text-[3rem] font-extrabold text-white tabular-nums">{format({ hour: "2-digit", minute: "2-digit" })}</span>
+      <span className="mt-1 block text-[1.25rem] font-semibold text-zinc-300">{format({ weekday: "long", day: "2-digit", month: "2-digit" })}</span>
+    </time>
+  );
 }
 
 export function LauncherShell({ data }: { data: LauncherData }) {
   const router = useRouter();
+  const tabs = useMemo(() => allTabs.filter((tab) => hasContent(tab.key, data)), [data]);
   const [index, setIndex] = useState(0);
   const [rankingCycle, setRankingCycle] = useState(0);
-  const [holdMs, setHoldMs] = useState(AUTO_MS);
+  const [manual, setManual] = useState(false);
   const [tick, setTick] = useState(0);
   const [inApp, setInApp] = useState(false);
-  const active = tabs[index].key;
+  const current = tabs[index % tabs.length];
+  const holdMs = manual ? MANUAL_MS : dwellMs(current.key, data);
 
   useEffect(() => setInApp(Boolean(window.tigerLauncher)), []);
 
   useEffect(() => {
     const id = setTimeout(() => {
-      setIndex((current) => (current + 1) % tabs.length);
-      setHoldMs(AUTO_MS);
+      setIndex((value) => (value + 1) % tabs.length);
+      setManual(false);
       setTick((value) => value + 1);
     }, holdMs);
     return () => clearTimeout(id);
-  }, [index, holdMs, tick]);
+  }, [index, holdMs, tick, tabs.length]);
 
   useEffect(() => {
-    if (active === "ranking") setRankingCycle((value) => value + 1);
-  }, [active]);
+    if (current.key === "ranking") setRankingCycle((value) => value + 1);
+  }, [current.key]);
 
   useEffect(() => {
     const id = setInterval(() => router.refresh(), REFRESH_MS);
@@ -68,40 +79,44 @@ export function LauncherShell({ data }: { data: LauncherData }) {
 
   const choose = (next: number) => {
     setIndex(next);
-    setHoldMs(MANUAL_MS);
+    setManual(true);
     setTick((value) => value + 1);
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-ground p-8 pb-6">
-      <header className="flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <TigerMark />
-          <div><p className="font-display text-4xl uppercase text-white">{data.brandName}</p><p className="text-lg font-semibold text-accent">Gaming Hub</p></div>
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-ground px-[3.5rem]">
+      <header className="flex items-center justify-between gap-8 pb-3 pt-7">
+        <div className="flex items-center gap-5">
+          <span className="grid size-[4.25rem] place-items-center bg-accent font-display text-[3rem] text-ground" aria-hidden="true">T</span>
+          <div>
+            <p className="font-display text-[3rem] uppercase text-white">Tiger Esports</p>
+            <p className="text-[1.375rem] font-bold text-accent">Gaming Hub</p>
+          </div>
         </div>
-        <div className="flex items-center gap-8">
-          <p className="text-2xl text-zinc-200">Hotline <b className="text-white tabular-nums">{data.hotline}</b></p>
+        <div className="flex items-center gap-10">
+          <p className="text-right text-[1.375rem] font-semibold leading-tight text-zinc-300">Hotline<span className="block text-[2rem] font-extrabold text-white tabular-nums">{data.hotline}</span></p>
           <Clock />
-          {inApp ? <button type="button" onClick={() => window.tigerLauncher?.close()} className="press min-h-12 rounded-xl bg-white px-6 text-2xl font-extrabold text-ground transition hover:bg-accent">Vào chơi</button> : null}
+          {inApp ? <button type="button" onClick={() => window.tigerLauncher?.close()} className="press min-h-[4.25rem] bg-white px-9 text-[1.875rem] font-extrabold text-ground transition-colors hover:bg-accent">Vào chơi</button> : null}
         </div>
       </header>
-      <div className="mt-6 flex min-h-0 flex-1 gap-8">
-        <nav aria-label="Mục thông tin" className="flex w-60 shrink-0 flex-col gap-3">
-          {tabs.map((tab, tabIndex) => (
-            <button key={tab.key} type="button" onClick={() => choose(tabIndex)} aria-current={tabIndex === index} className={`press relative overflow-hidden rounded-xl px-5 py-5 text-left text-2xl font-bold transition ${tabIndex === index ? "neon-glow bg-accent text-ground" : "bg-panel text-white hover:bg-white/10"}`}>
-              {tab.label}
-              {tabIndex === index ? <span key={`${index}-${tick}`} className="launcher-progress absolute inset-x-0 bottom-0 h-1.5 bg-ground/60" style={{ animationDuration: `${holdMs}ms` }} /> : null}
+      <main key={current.key} className="min-h-0 flex-1 overflow-hidden py-3">
+        {current.key === "promotions" ? <PromotionsSlide data={data} /> : null}
+        {current.key === "tournaments" ? <TournamentsSlide data={data} /> : null}
+        {current.key === "results" ? <ResultsSlide data={data} /> : null}
+        {current.key === "ranking" ? <RankingSlide data={data} cycle={rankingCycle} /> : null}
+        {current.key === "complaint" ? <ComplaintSlide data={data} /> : null}
+      </main>
+      <nav aria-label="Mục thông tin" className="flex gap-3 pb-7 pt-3">
+        {tabs.map((tab, tabIndex) => {
+          const active = tab.key === current.key;
+          return (
+            <button key={tab.key} type="button" onClick={() => choose(tabIndex)} aria-current={active} className={`press relative flex-1 overflow-hidden px-6 py-[1.375rem] text-[2rem] font-extrabold transition-colors ${active ? "bg-accent text-ground" : "bg-panel text-white hover:bg-white/15"}`}>
+              {active ? <span key={`${index}-${tick}`} className="launcher-progress absolute inset-0 bg-ground/25" style={{ animationDuration: `${holdMs}ms` }} aria-hidden="true" /> : null}
+              <span className="relative">{tab.label}</span>
             </button>
-          ))}
-        </nav>
-        <main className="min-h-0 min-w-0 flex-1 overflow-hidden" aria-live="off">
-          {active === "promotions" ? <PromotionsSlide data={data} /> : null}
-          {active === "tournaments" ? <TournamentsSlide data={data} /> : null}
-          {active === "results" ? <ResultsSlide data={data} /> : null}
-          {active === "ranking" ? <RankingSlide data={data} cycle={rankingCycle} /> : null}
-          {active === "complaint" ? <ComplaintSlide data={data} /> : null}
-        </main>
-      </div>
+          );
+        })}
+      </nav>
     </div>
   );
 }
