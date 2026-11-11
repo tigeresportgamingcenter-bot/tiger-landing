@@ -40,19 +40,19 @@ function sortGroup(key: GroupKey, events: TournamentEvent[]) {
   return sorted.sort((a, b) => (dateOf(a) || "9999").localeCompare(dateOf(b) || "9999"));
 }
 
-function EventCard({ event }: { event: TournamentEvent }) {
+function EventCard({ event, featured = false }: { event: TournamentEvent; featured?: boolean }) {
   const visual = event.image ?? event.video?.poster ?? null;
   const isCompleted = event.status === "completed";
   const fee = event.entryFee === null ? null : event.entryFee === 0 ? "Miễn phí" : `${new Intl.NumberFormat("vi-VN").format(event.entryFee)}đ`;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg bg-panel">
-      <div className="relative aspect-[2/1] overflow-hidden bg-ground sm:aspect-[16/10]">
-        {visual ? <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-cover transition duration-700 group-hover:scale-105" /> : null}
+    <article className={`motion-card group flex overflow-hidden rounded-lg bg-panel ${featured ? "flex-col lg:flex-row" : "flex-col"}`}>
+      <div className={`relative overflow-hidden bg-ground ${featured ? "aspect-[2/1] lg:aspect-auto lg:w-[52%]" : "aspect-[2/1] sm:aspect-[16/10]"}`}>
+        {visual ? <Image src={visual.src} alt={visual.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="motion-event-image object-cover" /> : null}
       </div>
-      <div className="flex flex-1 flex-col p-5">
+      <div className={`flex flex-1 flex-col ${featured ? "p-6 lg:justify-center lg:p-10" : "p-5"}`}>
         <p className="text-base font-semibold text-accent">{gameLabel(event.game)} · {statusLabels[event.status]}</p>
-        <h4 className="mt-1 text-xl font-extrabold leading-tight text-white">{event.name}</h4>
+        <h4 className={`mt-1 font-extrabold leading-tight text-white ${featured ? "text-2xl lg:text-4xl" : "text-xl"}`}>{event.name}</h4>
         <p className="mt-2 text-base text-zinc-300">{[formatDate(event.startsAt ?? event.heldOn), event.branchName, fee].filter(Boolean).join(" · ")}</p>
         {isCompleted && event.placements.length > 0 ? (
           <ol className="mt-3 grid gap-1 text-base text-zinc-300">
@@ -98,7 +98,7 @@ export function TournamentBoard({ events }: { events: TournamentEvent[] }) {
         ))}
       </div>
 
-      <div className="mt-10 grid gap-12">
+      <div key={game} className="motion-filter-content mt-10 grid gap-12">
         {groups.map(({ key, title }) => {
           const items = sortGroup(key, visibleEvents.filter((event) => groupOf(event.status) === key));
           if (!items.length) return null;
@@ -110,8 +110,8 @@ export function TournamentBoard({ events }: { events: TournamentEvent[] }) {
                 {title}
                 <span className="text-xl text-zinc-400">{items.length}</span>
               </h3>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {shown.map((event) => <EventCard key={event.id} event={event} />)}
+              <div className={`mt-5 grid gap-4 ${shown.length === 1 ? "grid-cols-1" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+                {shown.map((event) => <EventCard key={event.id} event={event} featured={shown.length === 1} />)}
               </div>
               {key === "completed" && items.length > visibleCompletedCount ? (
                 <button type="button" onClick={() => setShowAllCompleted((value) => !value)} className="press mt-4 min-h-12 rounded-lg bg-white/10 px-6 text-base font-semibold text-white transition hover:bg-white/20">
