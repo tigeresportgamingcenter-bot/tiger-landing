@@ -48,7 +48,7 @@ function PromoCard({ promotion, actionHref, upcoming }: { promotion: Promotion; 
   const tiers = [...promotion.tiers].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 4);
 
   return (
-    <article className="rounded-lg bg-ground p-6 text-paper">
+    <article className="motion-card rounded-lg bg-ground p-6 text-paper">
       <h3 className="font-display text-4xl uppercase">{promotion.name}</h3>
       {upcoming ? <p className="mt-1 text-base font-semibold text-accent">Sắp diễn ra</p> : null}
       {!isTopupBonus && promotion.price !== null ? <p className="mt-2 text-3xl font-extrabold tabular-nums text-accent">{formatNumber(promotion.price)}đ</p> : null}
