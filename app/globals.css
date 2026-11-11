@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root { color-scheme: dark; }
+/* Shared motion vocabulary: one owner per animated property. */
+:root { --motion-fast: 180ms; --motion-normal: 280ms; --motion-slow: 450ms; --motion-ease: cubic-bezier(.22,1,.36,1); }
 html { scroll-behavior: smooth; overflow-x: clip; }
 body { background: #0a0612; color: #f3effc; font-family: var(--font-archivo), sans-serif; font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem); line-height: 1.55; padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); text-rendering: optimizeLegibility; overflow-x: clip; }
 p { text-wrap: pretty; }
@@ -37,6 +39,21 @@ p { text-wrap: pretty; }
 .hero-zoom { animation: hero-zoom 24s ease-out forwards; }
 .scroll-progress { transform-origin: left; transform: scaleX(0); }
 
+.motion-card { transition: transform var(--motion-normal) var(--motion-ease), box-shadow var(--motion-normal) ease, border-color var(--motion-normal) ease; border: 1px solid transparent; }
+@media (hover: hover) and (pointer: fine) {
+  .motion-card:hover { transform: translateY(-4px); border-color: rgb(180 77 255 / .4); box-shadow: 0 16px 45px rgb(0 0 0 / .18), 0 0 24px rgb(180 77 255 / .12); }
+  .motion-card:hover .motion-product-image { transform: scale(1.04); }
+  .motion-card:hover .motion-event-image { transform: scale(1.035); }
+  .motion-choice:hover { transform: translateY(-2px); }
+}
+.motion-product-image, .motion-event-image { transition: transform var(--motion-slow) var(--motion-ease); }
+.motion-panel { animation: motion-panel-in var(--motion-normal) var(--motion-ease) both; }
+@keyframes motion-panel-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.motion-filter-content { animation: motion-filter-in 260ms var(--motion-ease) both; }
+@keyframes motion-filter-in { from { opacity: .55; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.motion-rank { animation: motion-rank-in 430ms var(--motion-ease) both; }
+@keyframes motion-rank-in { from { opacity: .5; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
 @supports (animation-timeline: view()) {
   .reveal { animation: reveal-up linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
   .scroll-progress { animation: scroll-progress linear both; animation-timeline: scroll(root); }
@@ -55,6 +72,8 @@ button:not(:disabled), a { -webkit-tap-highlight-color: transparent; }
   .hero-enter, .hero-zoom, .reveal, .scroll-progress { animation: none !important; }
   .hero-enter, .reveal { opacity: 1 !important; transform: none !important; }
   .scroll-progress { transform: scaleX(1); }
+  .motion-card, .motion-product-image, .motion-event-image, .motion-choice { transition: none !important; transform: none !important; }
+  .motion-panel, .motion-filter-content, .motion-rank { animation: none !important; }
 }
 
 @media (min-width: 768px) { body { padding-bottom: 0; } }
