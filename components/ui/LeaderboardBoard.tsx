@@ -51,13 +51,13 @@ export function LeaderboardBoard({ entries, branches }: { entries: LeaderboardEn
         </div>
         <p className="text-lg font-semibold text-zinc-200">{periodLabel(current, periodStart)}</p>
       </div>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" role="tabpanel">
+      <div key={current} className="motion-filter-content mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" role="tabpanel">
         {columns.map(({ branch, rows }) => (
           <section key={branch.id} className="rounded-lg bg-panel p-5">
             <h4 className="font-display text-3xl uppercase text-white">{branch.name}</h4>
             <ol className="mt-4 grid gap-2">
               {rows.map((row) => (
-                <li key={row.id} className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 ${row.rank === 1 ? "neon-glow bg-accent text-ground" : "bg-ground text-white"}`}>
+                <li key={row.id} className={`motion-rank flex items-center justify-between gap-3 rounded-lg px-4 py-3 ${row.rank === 1 ? "neon-glow bg-accent text-ground" : "bg-ground text-white"}`} style={{ animationDelay: `${Math.min(row.rank - 1, 4) * 55}ms` }}>
                   <span className="flex items-center gap-3 text-lg font-bold"><span className="w-5 tabular-nums">{row.rank}</span>{row.displayName}</span>
                   <span className={`text-base tabular-nums ${row.rank === 1 ? "font-bold" : "text-zinc-300"}`}>{new Intl.NumberFormat("vi-VN").format(row.points)}</span>
                 </li>

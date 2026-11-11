@@ -11,10 +11,10 @@ const termIcons = { id: IdCard, key: KeyRound, photo: Camera } as const;
 
 function GearCard({ item }: { item: GearItem }) {
   return (
-    <article className={`flex flex-col overflow-hidden rounded-lg bg-ground ${item.available ? "" : "opacity-70"}`}>
+    <article className={`motion-card flex flex-col overflow-hidden rounded-lg bg-ground ${item.available ? "" : "opacity-70"}`}>
       {item.image ? (
         <div className="relative aspect-[4/3] bg-white">
-          <Image src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-contain" />
+          <Image src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="motion-product-image object-contain" />
         </div>
       ) : null}
       <div className="flex flex-1 flex-col p-5">
