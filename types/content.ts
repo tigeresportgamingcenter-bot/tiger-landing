@@ -189,6 +189,8 @@ export interface TournamentEvent {
   status: TournamentStatus;
   registrationUrl: string | null;
   registrationOpen: boolean;
+  /** When registration closes; null means there is no deadline. */
+  registrationClosesAt: string | null;
   showInHallOfFame: boolean;
   summaryTitle: string | null;
   summaryContent: string | null;

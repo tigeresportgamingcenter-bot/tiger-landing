@@ -1,20 +1,21 @@
+import type { CSSProperties } from "react";
 import { Camera, Check, IdCard, KeyRound } from "lucide-react";
-import Image from "next/image";
+import { FadeImage } from "@/components/ui/FadeImage";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { CountUp } from "@/components/ui/CountUp";
 import { Container } from "@/components/ui/Container";
 import { gearRentalTerms } from "@/data/gearTerms";
 import { gearCategories, gearCategoryLabel, gearPriceUnitLabel } from "@/lib/gear";
 import type { GearItem } from "@/types";
 
-const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 const termIcons = { id: IdCard, key: KeyRound, photo: Camera } as const;
 
-function GearCard({ item }: { item: GearItem }) {
+function GearCard({ item, index }: { item: GearItem; index: number }) {
   return (
-    <article className={`flex flex-col overflow-hidden rounded-lg bg-ground ${item.available ? "" : "opacity-70"}`}>
+    <article style={{ "--i": index } as CSSProperties} className={`card-lift card-tilt stagger-item group flex flex-col overflow-hidden rounded-lg bg-ground ${item.available ? "" : "opacity-70"}`}>
       {item.image ? (
-        <div className="relative aspect-[4/3] bg-white">
-          <Image src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-contain" />
+        <div className="relative aspect-[4/3] overflow-hidden bg-white ring-1 ring-inset ring-white/10">
+          <FadeImage src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-contain transition-transform duration-500 ease-out group-hover:scale-110 group-active:scale-110" />
         </div>
       ) : null}
       <div className="flex flex-1 flex-col p-5">
@@ -22,16 +23,18 @@ function GearCard({ item }: { item: GearItem }) {
         <h3 className="mt-1 font-display text-3xl uppercase leading-tight text-white">{item.name}</h3>
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           {item.price !== null
-            ? <p className="text-3xl font-extrabold tabular-nums text-accent">{formatNumber(item.price)}đ<span className="text-base font-semibold text-zinc-300">/{gearPriceUnitLabel(item.priceUnit)}</span></p>
+            ? <p className="text-3xl font-extrabold tabular-nums text-accent"><CountUp value={item.price} />đ<span className="text-base font-semibold text-zinc-300">/{gearPriceUnitLabel(item.priceUnit)}</span></p>
             : <p className="text-lg font-bold text-accent">Hỏi giá tại quầy</p>}
-          {item.available ? null : <span className="rounded-full bg-white/10 px-3 py-1 text-base font-semibold text-zinc-200">Tạm hết</span>}
+          {item.available
+            ? <span className="inline-flex items-center gap-2 text-base font-semibold text-emerald-300"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inset-0 rounded-full bg-emerald-400 opacity-70 motion-safe:animate-ping" /><span className="relative size-2 rounded-full bg-emerald-400" /></span>Còn hàng</span>
+            : <span className="rounded-full bg-white/10 px-3 py-1 text-base font-semibold text-zinc-200">Tạm hết</span>}
         </div>
         {item.description ? <p className="mt-4 text-base leading-snug text-zinc-100">{item.description}</p> : null}
         {item.specs.length ? (
           <ul className="mt-4 grid gap-2 border-t border-white/10 pt-4">
-            {item.specs.map((spec) => (
-              <li key={spec} className="flex items-start gap-2 text-base leading-snug text-zinc-300">
-                <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />{spec}
+            {item.specs.map((spec, specIndex) => (
+              <li key={spec} style={{ "--i": specIndex } as CSSProperties} className="stagger-item flex items-start gap-2 text-base leading-snug text-zinc-300">
+                <Check className="mt-0.5 size-4 shrink-0 text-accent transition-transform duration-300 group-hover:scale-125" aria-hidden="true" />{spec}
               </li>
             ))}
           </ul>
@@ -53,7 +56,7 @@ export function GearSection({ items, actionHref }: GearSectionProps) {
   const ordered = [...items].sort((a, b) => categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category));
 
   return (
-    <section id="cho-thue-gear" className="bg-panel py-20 sm:py-28">
+    <section id="cho-thue-gear" className="ambient bg-panel py-20 sm:py-28">
       <Container>
         <div className="reveal flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
@@ -69,11 +72,11 @@ export function GearSection({ items, actionHref }: GearSectionProps) {
 
         {ordered.length ? (
           <div className="reveal mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ordered.map((item) => <GearCard key={item.id} item={item} />)}
+            {ordered.map((item, index) => <GearCard key={item.id} item={item} index={index} />)}
           </div>
         ) : null}
 
-        <div className="reveal mt-12 rounded-lg bg-ground p-6 sm:p-8 lg:flex lg:items-center lg:justify-between lg:gap-10">
+        <div className="reveal-scale mt-12 rounded-lg bg-ground p-6 sm:p-8 lg:flex lg:items-center lg:justify-between lg:gap-10">
           <h3 className="font-display text-4xl uppercase text-white">Điều kiện thuê</h3>
           <ul className="mt-5 grid gap-3 sm:grid-cols-3 lg:mt-0 lg:max-w-3xl lg:flex-1">
             {gearRentalTerms.map((term) => {

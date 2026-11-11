@@ -123,6 +123,7 @@ export async function getPublishedTournamentBySlug(slug: string): Promise<Tourna
     status: "completed",
     registrationUrl: null,
     registrationOpen: false,
+    registrationClosesAt: null,
     showInHallOfFame: staticTournament.showInHallOfFame,
     summaryTitle: null,
     summaryContent: null,

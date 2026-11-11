@@ -7,13 +7,13 @@ export const siteSettings: SiteSettings = {
 };
 
 export const navigation: NavigationItem[] = [
-  { label: "Cơ sở", href: "#co-so" },
-  { label: "Giá và ưu đãi", href: "#bang-gia" },
-  { label: "Thuê gear", href: "#cho-thue-gear" },
-  { label: "Đấu trường", href: "#giai-dau" },
-  { label: "Xếp hạng", href: "#bang-xep-hang" },
-  { label: "Khiếu nại", href: "#khieu-nai" },
-  { label: "Liên hệ", href: "#lien-he" },
+  { label: "Cơ sở", href: "/co-so" },
+  { label: "Giá và ưu đãi", href: "/bang-gia" },
+  { label: "Thuê gear", href: "/cho-thue-gear" },
+  { label: "Đấu trường", href: "/giai-dau" },
+  { label: "Xếp hạng", href: "/bang-xep-hang" },
+  { label: "Khiếu nại", href: "/khieu-nai" },
+  { label: "Liên hệ", href: "/lien-he" },
 ];
 
 export const heroContent: HeroContent = {

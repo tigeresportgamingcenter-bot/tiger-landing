@@ -10,13 +10,13 @@ interface ButtonLinkProps {
 
 export function ButtonLink({ href, children, variant = "primary", external = false, className = "" }: ButtonLinkProps) {
   const styles = variant === "primary"
-    ? "neon-hover bg-accent text-ground hover:bg-[#c98bff]"
+    ? "btn-sheen neon-hover bg-accent text-ground hover:bg-[#c98bff]"
     : "bg-white/10 text-white hover:bg-white/20";
 
   return (
     <a
       href={href}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 press rounded-lg px-6 py-3 text-sm font-bold uppercase tracking-wide transition ${styles} ${className}`}
+      className={`magnetic inline-flex min-h-12 items-center justify-center gap-2 press rounded-lg px-6 py-3 text-sm font-bold uppercase tracking-wide transition ${styles} ${className}`}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
     >
       {children}

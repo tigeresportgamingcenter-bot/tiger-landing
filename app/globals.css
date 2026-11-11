@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root { color-scheme: dark; --ease-out: cubic-bezier(.22,1,.36,1); --dur-fast: .15s; --dur-med: .35s; --dur-slow: .7s; --stagger: 60ms; }
 html { scroll-behavior: smooth; overflow-x: clip; }
 body { background: #0a0612; color: #f3effc; font-family: var(--font-archivo), sans-serif; font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem); line-height: 1.55; padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); text-rendering: optimizeLegibility; overflow-x: clip; }
 p { text-wrap: pretty; }
@@ -42,6 +42,136 @@ p { text-wrap: pretty; }
   .scroll-progress { animation: scroll-progress linear both; animation-timeline: scroll(root); }
 }
 
+
+/* ---- Shared motion kit. One place for timing: --ease-out, --dur-*, --stagger. ---- */
+@keyframes enter-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fade-slide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes pulse-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+
+@keyframes reveal-left { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-right { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-scale { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes reveal-clip { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes line-rise { to { transform: none; } }
+@keyframes neon-flicker { 0%, 100% { opacity: 1; } 8% { opacity: .4; } 14% { opacity: 1; } 22% { opacity: .6; } 30% { opacity: 1; } }
+@keyframes drift { from { transform: translate3d(-3%, -2%, 0); } to { transform: translate3d(3%, 2%, 0); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+@keyframes parallax { to { transform: translateY(14%); } }
+@keyframes logo-spin { from { opacity: 0; transform: rotate(-120deg) scale(.5); } to { opacity: 1; transform: none; } }
+
+/* Hero headline: each line rises out of a mask. --d sets the delay. */
+.line-mask { display: block; overflow: hidden; padding-bottom: .06em; margin-bottom: -.06em; }
+.line-rise { display: block; transform: translateY(112%); animation: line-rise .8s var(--ease-out) var(--d, 0ms) forwards; }
+.line-rise-neon { animation: line-rise .8s var(--ease-out) var(--d, 0ms) forwards, neon-flicker 1s linear calc(var(--d, 0ms) + 700ms) both; }
+.bob { animation: bob 2s ease-in-out infinite; }
+
+/* Slow neon haze behind dark sections. Static on phones. */
+.ambient { position: relative; isolation: isolate; overflow: clip; }
+.ambient::before { content: ""; position: absolute; inset: -15%; z-index: -1; pointer-events: none; background: radial-gradient(circle at 18% 28%, rgb(180 77 255 / 0.18), transparent 38%), radial-gradient(circle at 82% 72%, rgb(110 70 255 / 0.14), transparent 42%); animation: drift 26s ease-in-out infinite alternate; }
+@media (max-width: 767px) { .ambient::before { animation: none; } }
+
+/* Content inside an opened <details> arrives after the panel opens. */
+details[open] > :not(summary):not(.menu-panel) { animation: fade-slide var(--dur-med) var(--ease-out) backwards; }
+details[open] .spec-row { animation: enter-up var(--dur-med) var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 5) * var(--stagger) + 80ms); }
+
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+.ripple-layer { position: absolute; inset: 0; z-index: 2; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.ripple-dot { position: absolute; border-radius: 50%; background: currentColor; opacity: .25; transform: scale(0); animation: ripple .6s var(--ease-out) forwards; }
+
+@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin-angle { to { --angle: 360deg; } }
+/* Open FAQ and tier rows get a neon light running around the border. */
+details.neon-run { position: relative; }
+details.neon-run[open]::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; padding: 2px; border-radius: inherit; pointer-events: none;
+  background: conic-gradient(from var(--angle), transparent 0 62%, #b44dff 80%, #e9ccff 90%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin-angle 3.5s linear infinite;
+}
+
+@keyframes marquee { to { transform: translateX(-50%); } }
+.ticker { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.ticker-track { display: flex; width: max-content; animation: marquee 45s linear infinite; }
+.ticker:hover .ticker-track { animation-play-state: paused; }
+
+@keyframes flip-in { from { opacity: 0; transform: perspective(200px) rotateX(-80deg); } to { opacity: 1; transform: none; } }
+.flip { transform-origin: top; animation: flip-in .4s var(--ease-out) both; }
+
+@keyframes img-reveal { from { opacity: 0; filter: blur(14px); } to { opacity: 1; filter: none; } }
+.img-reveal { animation: img-reveal .7s ease-out backwards; }
+
+/* Page-to-page transitions (Chrome and other browsers that support them). A tournament image grows from its card into the detail page header. */
+@view-transition { navigation: auto; }
+::view-transition-group(*) { animation-duration: .45s; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .3s; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+
+.nav-active { color: #b44dff; }
+.nav-active.link-underline::after { transform: scaleX(1); }
+.to-top { transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out); }
+.to-top[data-visible="false"] { opacity: 0; transform: translateY(12px); pointer-events: none; }
+
+/* Time-based entrance, used when content swaps (tab or filter change). Delay = --i * --stagger, capped at 5 steps. */
+.enter { animation: enter-up var(--dur-med) var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 5) * var(--stagger)); }
+/* Swapped panel: a short fade and rise. */
+.panel-in { animation: fade-slide .35s var(--ease-out) backwards; }
+
+.card-lift { position: relative; transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) ease; }
+.card-lift::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s ease; background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(180 77 255 / 0.22), transparent 70%); }
+.magnetic { translate: var(--mag-x, 0px) var(--mag-y, 0px); transition: translate .2s var(--ease-out), transform .15s ease, background-color .25s ease, box-shadow .25s ease, color .25s ease, opacity .25s ease; }
+.card-lift::before, .btn-sheen::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; background-size: 260% 100%; background-position: 160% 0; transition: background-position var(--dur-slow) var(--ease-out); }
+.card-lift::before { background-image: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.10) 50%, transparent 60%); }
+.btn-sheen { position: relative; }
+.btn-sheen::before { background-image: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.45) 50%, transparent 62%); }
+.btn-sheen svg { transition: transform var(--dur-fast) var(--ease-out); }
+.btn-sheen:hover::before, .btn-sheen:focus-visible::before { background-position: -60% 0; }
+.btn-sheen:hover svg, .btn-sheen:focus-visible svg { transform: translateX(3px); }
+@media (hover: hover) {
+  .card-lift:hover::before { background-position: -60% 0; }
+  .card-lift:hover::after { opacity: 1; }
+  .card-tilt:hover { transform: perspective(900px) translateY(-4px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)); }
+  .card-lift:hover { transform: translateY(-4px); box-shadow: 0 0 0 1px rgb(180 77 255 / 0.45), 0 14px 32px rgb(0 0 0 / 0.45), 0 0 26px rgb(180 77 255 / 0.22); }
+}
+
+.link-underline { position: relative; }
+.link-underline::after { content: ""; position: absolute; inset-inline: 0; bottom: -4px; height: 2px; background: #b44dff; transform: scaleX(0); transform-origin: left; transition: transform var(--dur-fast) var(--ease-out); }
+.link-underline:hover::after, .link-underline:focus-visible::after { transform: scaleX(1); }
+
+.menu-panel { transform-origin: top right; }
+details[open] > .menu-panel { animation: menu-in var(--dur-fast) var(--ease-out) backwards; }
+
+/* Slow glow ring on the main call button; runs on opacity only. */
+.pulse-glow { position: relative; }
+.pulse-glow::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: 0 0 0 1px rgb(201 139 255 / 0.8), 0 0 26px 4px rgb(180 77 255 / 0.6); opacity: 0; animation: pulse-glow 3s ease-in-out infinite; }
+.pulse-glow:hover::after, .pulse-glow:focus-visible::after { animation-play-state: paused; }
+
+.site-header { transition: transform .3s var(--ease-out); }
+.site-header[data-hidden="true"] { transform: translateY(-100%); }
+
+.shimmer { position: relative; overflow: hidden; }
+.shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.07), transparent); animation: shimmer 1.4s ease-in-out infinite; }
+
+@supports (animation-timeline: view()) {
+  /* Cards fade up as they scroll into view; --i shifts the range so siblings arrive one after another. */
+  .stagger-item { animation: reveal-up linear backwards; animation-timeline: view(); animation-range: entry calc(min(var(--i, 0), 5) * 6%) entry calc(40% + min(var(--i, 0), 5) * 6%); }
+  .reveal-left { animation: reveal-left linear backwards; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+  .reveal-right { animation: reveal-right linear backwards; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+  .reveal-scale { animation: reveal-scale linear backwards; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+  .reveal-clip { animation: reveal-clip linear backwards; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  .stagger-right { animation: reveal-right linear backwards; animation-timeline: view(); animation-range: entry calc(min(var(--i, 0), 5) * 6%) entry calc(40% + min(var(--i, 0), 5) * 6%); }
+  .stagger-pop { animation: reveal-scale linear backwards; animation-timeline: view(); animation-range: entry calc(min(var(--i, 0), 5) * 6%) entry calc(40% + min(var(--i, 0), 5) * 6%); }
+  .footer-logo { display: inline-block; animation: logo-spin linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  /* Section titles draw an accent bar. */
+  :is(.reveal, .reveal-left, .reveal-right, .reveal-scale) h2.text-5xl::after { content: ""; display: block; width: 4.5rem; height: 4px; margin-top: 1rem; background: var(--bar, #b44dff); transform-origin: left; animation: bar-grow linear both; animation-timeline: view(); animation-range: entry 10% entry 60%; }
+  .hero-parallax { animation: parallax linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+}
+@media (max-width: 767px) { .hero-parallax { animation: none; } }
+
 details { interpolate-size: allow-keywords; }
 details::details-content { block-size: 0; overflow: clip; transition: block-size .3s ease, content-visibility .3s allow-discrete; }
 details[open]::details-content { block-size: auto; }
@@ -55,6 +185,23 @@ button:not(:disabled), a { -webkit-tap-highlight-color: transparent; }
   .hero-enter, .hero-zoom, .reveal, .scroll-progress { animation: none !important; }
   .hero-enter, .reveal { opacity: 1 !important; transform: none !important; }
   .scroll-progress { transform: scaleX(1); }
+  .enter, .panel-in, .stagger-item, .menu-panel { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .reveal-left, .reveal-right, .reveal-scale, .reveal-clip, .stagger-right, .stagger-pop, .footer-logo, .line-rise, .line-rise-neon, .hero-parallax, .bob, .spec-row { animation: none !important; opacity: 1 !important; transform: none !important; clip-path: none !important; }
+  details[open] > :not(summary) { animation: none !important; }
+  .ambient::before { animation: none; }
+  .ticker-track { animation: none; }
+  .flip { animation: none; }
+  .img-reveal { animation: none; }
+  .ticker-track .ticker-group[aria-hidden] { display: none; }
+  .pulse-glow::after, .shimmer::after, :is(.reveal, .reveal-left, .reveal-right, .reveal-scale) h2.text-5xl::after { animation: none !important; }
+  :is(.reveal, .reveal-left, .reveal-right, .reveal-scale) h2.text-5xl::after { transform: none; }
+  .card-lift::before, .btn-sheen::before { transition: none; }
+  details.neon-run[open]::before { animation: none; }
+  .ripple-layer { display: none; }
+  .card-lift:hover, .card-tilt:hover { transform: none; }
+  .magnetic { translate: none; }
+  .card-lift::after { display: none; }
+  .site-header[data-hidden="true"] { transform: none; }
 }
 
 @media (min-width: 768px) { body { padding-bottom: 0; } }

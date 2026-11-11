@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { ArrowUpRight, MessageCircle, PhoneCall } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { complaintSteps } from "@/data/complaintSteps";
@@ -14,7 +15,7 @@ const secondaryButton = "press inline-flex min-h-12 items-center justify-center 
 
 export function ComplaintSection({ formUrl, hotline, zaloHref }: ComplaintSectionProps) {
   return (
-    <section id="khieu-nai" className="bg-accent py-20 text-ground sm:py-28">
+    <section id="khieu-nai" className="bg-accent py-20 text-ground [--bar:#0a0612] sm:py-28">
       <Container>
         <div className="reveal grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
@@ -31,8 +32,8 @@ export function ComplaintSection({ formUrl, hotline, zaloHref }: ComplaintSectio
             <p className="mt-5 text-base font-semibold">{formUrl ? "Cần hỗ trợ gấp? Hãy gọi hotline thay vì chờ biểu mẫu." : "Chúng tôi sẽ ghi nhận và phản hồi lại bạn sớm nhất."}</p>
           </div>
           <ol className="grid content-start gap-3 lg:col-span-7">
-            {complaintSteps.map((step) => (
-              <li key={step.title} className="rounded-lg bg-ground p-6 text-paper">
+            {complaintSteps.map((step, index) => (
+              <li key={step.title} style={{ "--i": index } as CSSProperties} className="stagger-right rounded-lg bg-ground p-6 text-paper">
                 <h3 className="font-display text-4xl uppercase">{step.title}</h3>
                 <p className="mt-2 max-w-[52ch] text-lg leading-snug text-zinc-300">{step.description}</p>
               </li>
