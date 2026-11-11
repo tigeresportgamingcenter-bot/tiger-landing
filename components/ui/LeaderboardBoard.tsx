@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { CountUp } from "@/components/ui/CountUp";
 import type { LeaderboardEntry, LeaderboardPeriod } from "@/types";
 
 interface BranchRef {
@@ -29,6 +30,7 @@ export function LeaderboardBoard({ entries, branches }: { entries: LeaderboardEn
   const latest = (period: LeaderboardPeriod) => entries.filter((entry) => entry.period === period).map((entry) => entry.periodStart).sort().at(-1) ?? null;
   const available = periods.filter(({ key }) => latest(key) !== null);
   const [active, setActive] = useState<LeaderboardPeriod>(available[0]?.key ?? "week");
+  const [swapped, setSwapped] = useState(false);
 
   if (!available.length) return null;
   const current = available.some(({ key }) => key === active) ? active : available[0].key;
@@ -44,22 +46,22 @@ export function LeaderboardBoard({ entries, branches }: { entries: LeaderboardEn
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2" role="tablist" aria-label="Kỳ xếp hạng">
           {available.map(({ key, label }) => (
-            <button key={key} type="button" role="tab" aria-selected={current === key} onClick={() => setActive(key)} className={`press min-h-12 rounded-lg px-5 text-base font-semibold transition ${current === key ? "bg-accent text-ground" : "bg-panel text-white hover:bg-white/10"}`}>
+            <button key={key} type="button" role="tab" aria-selected={current === key} onClick={() => { setActive(key); setSwapped(true); }} className={`press min-h-12 rounded-lg px-5 text-base font-semibold transition ${current === key ? "bg-accent text-ground" : "bg-panel text-white hover:bg-white/10"}`}>
               {label}
             </button>
           ))}
         </div>
         <p className="text-lg font-semibold text-zinc-200">{periodLabel(current, periodStart)}</p>
       </div>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" role="tabpanel">
+      <div key={current} className={`mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 ${swapped ? "panel-in" : ""}`} role="tabpanel">
         {columns.map(({ branch, rows }) => (
           <section key={branch.id} className="rounded-lg bg-panel p-5">
             <h4 className="font-display text-3xl uppercase text-white">{branch.name}</h4>
             <ol className="mt-4 grid gap-2">
-              {rows.map((row) => (
-                <li key={row.id} className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 ${row.rank === 1 ? "neon-glow bg-accent text-ground" : "bg-ground text-white"}`}>
+              {rows.map((row, index) => (
+                <li key={row.id} style={{ "--i": index } as CSSProperties} className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 ${swapped ? "enter" : ""} ${row.rank === 1 ? "pulse-glow neon-glow bg-accent text-ground" : "bg-ground text-white"}`}>
                   <span className="flex items-center gap-3 text-lg font-bold"><span className="w-5 tabular-nums">{row.rank}</span>{row.displayName}</span>
-                  <span className={`text-base tabular-nums ${row.rank === 1 ? "font-bold" : "text-zinc-300"}`}>{new Intl.NumberFormat("vi-VN").format(row.points)}</span>
+                  <span className={`text-base tabular-nums ${row.rank === 1 ? "font-bold" : "text-zinc-300"}`}><CountUp value={row.points} /></span>
                 </li>
               ))}
             </ol>

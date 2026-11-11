@@ -144,6 +144,7 @@ function mapTournament(row: Record<string, unknown>): TournamentEvent | null {
     status,
     registrationUrl: safeUrl(row.registration_url),
     registrationOpen,
+    registrationClosesAt: typeof row.registration_closes_at === "string" ? row.registration_closes_at : null,
     showInHallOfFame: row.show_in_hall_of_fame === true,
     summaryTitle: typeof row.summary_title === "string" && row.summary_title.trim() ? row.summary_title : null,
     summaryContent: typeof row.summary_content === "string" && row.summary_content.trim() ? row.summary_content : null,

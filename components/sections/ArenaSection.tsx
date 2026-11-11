@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import Image from "next/image";
+import { FadeImage } from "@/components/ui/FadeImage";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Container } from "@/components/ui/Container";
 import { LeaderboardBoard } from "@/components/ui/LeaderboardBoard";
@@ -39,9 +39,9 @@ function MoreItems({ count, className, children }: { count: number; className: s
   );
 }
 
-function ResultCard({ row }: { row: ResultRow }) {
+function ResultCard({ row, index }: { row: ResultRow; index: number }) {
   return (
-    <Link href={`/giai-dau/${row.slug}`} className="rounded-lg bg-panel p-5 transition hover:bg-white/10">
+    <Link href={`/giai-dau/${row.slug}`} style={{ "--i": index } as CSSProperties} className="card-lift stagger-item rounded-lg bg-panel p-5 transition-colors hover:bg-white/10">
       <p className="text-lg font-bold text-white">{row.name}</p>
       <ol className="mt-2 grid gap-1 text-base text-zinc-300">
         {row.placements.slice(0, 3).map((placement) => <li key={placement.position} className="flex justify-between gap-4"><span className="text-accent">{placementLabels[placement.position]}</span><span>{placement.displayName}</span></li>)}
@@ -62,8 +62,8 @@ function MemberRow({ member, rank }: { member: HonoredMember; rank: number }) {
 function GalleryFigure({ item }: { item: GalleryItem }) {
   return (
     <figure>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-panel">
-        {item.mediaType === "image" && item.image ? <Image src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 1023px) 50vw, 25vw" className="object-cover" /> : item.video ? <MediaPreview video={item.video} title={item.title} /> : null}
+      <div className="reveal-clip relative aspect-[4/3] overflow-hidden rounded-lg bg-panel">
+        {item.mediaType === "image" && item.image ? <FadeImage src={item.image.src} alt={item.image.alt} fill sizes="(max-width: 1023px) 50vw, 25vw" className="object-cover" /> : item.video ? <MediaPreview video={item.video} title={item.title} /> : null}
       </div>
       <figcaption className="mt-2 text-base text-zinc-300">{item.title}{item.caption ? <span className="block text-[13px] text-zinc-400">{item.caption}</span> : null}</figcaption>
     </figure>
@@ -95,7 +95,7 @@ export function ArenaSection({ events, completedEvents, hallOfFame, leaderboard,
   if (!allEvents.length && !archivedResults.length && !hasLeaderboard && !members.length && !games.length && !gallery.length) return null;
 
   return (
-    <section id="giai-dau" className="bg-ground py-20 sm:py-28">
+    <section id="giai-dau" className="ambient bg-ground py-20 sm:py-28">
       <span id="cong-dong" className="block" />
       <span id="tong-ket-giai-dau" className="block" />
       <Container>
@@ -112,7 +112,7 @@ export function ArenaSection({ events, completedEvents, hallOfFame, leaderboard,
         {archivedResults.length ? (
           <div className="reveal mt-16">
             <h3 className="font-display text-4xl uppercase text-white">Nhà vô địch</h3>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{archivedResults.map((row) => <ResultCard key={row.slug} row={row} />)}</div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{archivedResults.map((row, index) => <ResultCard key={row.slug} row={row} index={index} />)}</div>
           </div>
         ) : null}
 

@@ -15,7 +15,7 @@ function event(id: string, name: string, game: SupportedGame, status: Tournament
   return {
     id, slug: id, name: `${name} (demo)`, game, description: "Nội dung demo để xem trước giao diện.", heldOn: date, startsAt: isCompleted ? null : `${date}T19:00:00+07:00`, endsAt: null,
     branchName, placements: isCompleted ? podium : [], image, video: null, rules: null, entryFee: 50000, format: "Thể thức demo", prizePool: null, prizeFirst: null, prizeSecond: null, prizeThird: null,
-    status, registrationUrl: "https://example.com/demo", registrationOpen: status === "registration_open", showInHallOfFame: isCompleted,
+    status, registrationUrl: "https://example.com/demo", registrationOpen: status === "registration_open", registrationClosesAt: null, showInHallOfFame: isCompleted,
     summaryTitle: null, summaryContent: null, highlights: [], facebookPostUrl: null, ...extra,
   };
 }

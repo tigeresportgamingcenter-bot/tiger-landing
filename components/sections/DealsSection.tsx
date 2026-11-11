@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import { ChevronDown } from "lucide-react";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { CountUp } from "@/components/ui/CountUp";
 import { Container } from "@/components/ui/Container";
 import { formatHourlyPrice } from "@/lib/formatPrice";
 import type { PcTier, PricingPlan, Promotion } from "@/types";
@@ -43,15 +45,15 @@ function buildRows(tiers: PcTier[], pricing: PricingPlan[]): TierRow[] {
   return [...rows, ...unmatched.map((plan) => ({ id: plan.tierId, name: plan.tier, tier: undefined, plan }))];
 }
 
-function PromoCard({ promotion, actionHref, upcoming }: { promotion: Promotion; actionHref: string; upcoming: boolean }) {
+function PromoCard({ promotion, actionHref, upcoming, index = 0 }: { promotion: Promotion; actionHref: string; upcoming: boolean; index?: number }) {
   const isTopupBonus = promotion.promotionType === "topup_bonus";
   const tiers = [...promotion.tiers].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 4);
 
   return (
-    <article className="rounded-lg bg-ground p-6 text-paper">
+    <article style={{ "--i": index } as CSSProperties} className="card-lift stagger-item rounded-lg bg-ground p-6 text-paper">
       <h3 className="font-display text-4xl uppercase">{promotion.name}</h3>
       {upcoming ? <p className="mt-1 text-base font-semibold text-accent">Sắp diễn ra</p> : null}
-      {!isTopupBonus && promotion.price !== null ? <p className="mt-2 text-3xl font-extrabold tabular-nums text-accent">{formatNumber(promotion.price)}đ</p> : null}
+      {!isTopupBonus && promotion.price !== null ? <p className="mt-2 text-3xl font-extrabold tabular-nums text-accent"><CountUp value={promotion.price} />đ</p> : null}
       {isTopupBonus && tiers.length > 0 ? (
         <dl className="mt-4 grid gap-1">
           {tiers.map((tier) => (
@@ -96,9 +98,9 @@ export function DealsSection({ tiers, pricing, promotions, upcomingPromotions, a
           <ButtonLink href={actionHref} className="self-start lg:self-auto">Gọi kiểm tra giá</ButtonLink>
         </div>
         <div className="mt-12 grid gap-10 lg:grid-cols-12">
-          <div className={`reveal grid content-start gap-2 ${hasPromotions ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-3xl"}`}>
+          <div className={`reveal-left grid content-start gap-2 ${hasPromotions ? "lg:col-span-7" : "lg:col-span-12 lg:max-w-3xl"}`}>
             {rows.map((row, index) => (
-              <details key={row.id} name="tier" open={index === 0} className="group rounded-lg bg-white transition-colors open:neon-box open:bg-ground open:text-paper">
+              <details key={row.id} name="tier" open={index === 0} className="neon-run group rounded-lg bg-white transition-colors open:neon-box open:bg-ground open:text-paper">
                 <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-4 px-5 sm:px-7">
                   <span className="font-display text-4xl uppercase sm:text-5xl">{row.name}</span>
                   <span className="flex items-center gap-3">
@@ -111,8 +113,8 @@ export function DealsSection({ tiers, pricing, promotions, upcomingPromotions, a
                   {row.plan ? <p className="mt-3 max-w-[52ch] text-base text-zinc-700 group-open:text-zinc-300">{row.plan.note}</p> : null}
                   {row.tier ? (
                     <dl className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                      {specs.filter(({ key }) => row.tier?.[key]).map(({ key, label }) => (
-                        <div key={key}><dt className="text-base text-zinc-600 group-open:text-zinc-400">{label}</dt><dd className="mt-0.5 text-lg font-semibold">{row.tier?.[key]}</dd></div>
+                      {specs.filter(({ key }) => row.tier?.[key]).map(({ key, label }, specIndex) => (
+                        <div key={key} style={{ "--i": specIndex } as CSSProperties} className="spec-row"><dt className="text-base text-zinc-600 group-open:text-zinc-400">{label}</dt><dd className="mt-0.5 text-lg font-semibold">{row.tier?.[key]}</dd></div>
                       ))}
                     </dl>
                   ) : null}
@@ -122,9 +124,9 @@ export function DealsSection({ tiers, pricing, promotions, upcomingPromotions, a
             ))}
           </div>
           {hasPromotions ? (
-            <div className={`reveal grid content-start gap-3 ${rows.length ? "lg:col-span-5" : "lg:col-span-12 lg:grid-cols-2"}`}>
-              {orderedPromotions.map((promotion) => <PromoCard key={promotion.id} promotion={promotion} actionHref={actionHref} upcoming={false} />)}
-              {upcomingPromotions.map((promotion) => <PromoCard key={promotion.id} promotion={promotion} actionHref={actionHref} upcoming />)}
+            <div className={`reveal-right grid content-start gap-3 ${rows.length ? "lg:col-span-5" : "lg:col-span-12 lg:grid-cols-2"}`}>
+              {orderedPromotions.map((promotion, index) => <PromoCard key={promotion.id} promotion={promotion} actionHref={actionHref} upcoming={false} index={index} />)}
+              {upcomingPromotions.map((promotion, index) => <PromoCard key={promotion.id} promotion={promotion} actionHref={actionHref} upcoming index={orderedPromotions.length + index} />)}
             </div>
           ) : null}
         </div>
